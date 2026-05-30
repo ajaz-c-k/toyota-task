@@ -296,82 +296,91 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#09090b] text-zinc-200 font-sans antialiased">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col md:flex-row">
       
-      {/* Top Navbar */}
-      <header className="w-full border-b border-zinc-900 bg-zinc-950 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold tracking-tighter text-white">TOYOTA</span>
-          <span className="text-zinc-800">|</span>
-          <span className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Admin Panel</span>
+      {/* Left Sidebar Navigation */}
+      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
+        
+        {/* Sidebar Brand Header */}
+        <div className="p-6 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-tighter text-slate-900">TOYOTA</span>
+            <span className="text-slate-300">|</span>
+            <span className="text-xs uppercase tracking-widest text-slate-500 font-bold">Admin Portal</span>
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-xs">
-          <span className="text-zinc-500 font-medium">Confidential Console</span>
+
+        {/* Sidebar Nav Items */}
+        <nav className="flex-1 px-4 py-6 space-y-1.5">
+          {[
+            { id: "payroll", label: "Total Sales" },
+            { id: "inventory", label: "Active Models" },
+            { id: "slabs", label: "Incentive Rate" },
+            { id: "users", label: "Pending Approvals" },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                  isActive 
+                    ? "bg-red-50 text-[#EB0A1E]" 
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sidebar Footer / Logout */}
+        <div className="p-6 border-t border-slate-200 flex flex-col gap-3">
+          <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider text-center">
+            Confidential Console
+          </div>
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-850 hover:border-zinc-700 transition-all duration-150 cursor-pointer"
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 font-medium transition-all duration-150 cursor-pointer text-center"
           >
             Log Out
           </button>
         </div>
-      </header>
 
-      {/* Screen tabs Sub-Header */}
-      <nav className="w-full bg-zinc-950 border-b border-zinc-900 flex px-6 py-1 gap-2 z-10">
-        {[
-          { id: "inventory", label: "Vehicle Models" },
-          { id: "slabs", label: "Slab Settings" },
-          { id: "payroll", label: "Total Payroll" },
-          { id: "users", label: "Users History" },
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 py-3.5 text-xs font-semibold border-b-2 transition-all duration-150 cursor-pointer ${
-                isActive 
-                  ? "border-[#EB0A1E] text-white" 
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
+      </aside>
 
-      {/* Main Workspace */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
+      {/* Main Workspace Area */}
+      <main className="flex-1 min-w-0 px-6 md:px-10 py-8 space-y-6">
         
-        {/* Toast Alerts */}
+        {/* Toast Alerts (Float) */}
         {(successMessage || errorMessage) && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded border text-xs font-medium shadow-lg max-w-md animate-fade-in bg-zinc-900 border-zinc-800">
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg border text-xs font-semibold shadow-lg max-w-md animate-fade-in bg-white border-slate-250 text-slate-800">
             {successMessage ? (
               <>
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-zinc-300">{successMessage}</span>
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span>{successMessage}</span>
               </>
             ) : (
               <>
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <span className="text-zinc-300">{errorMessage}</span>
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <span>{errorMessage}</span>
               </>
             )}
           </div>
         )}
 
-        {/* --- SCREEN 1: VEHICLE MODELS (INVENTORY) --- */}
+        {/* --- SCREEN 1: ACTIVE MODELS (INVENTORY) --- */}
         {activeTab === "inventory" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
               <div>
-                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Vehicle Models</h1>
-                <p className="text-xs text-zinc-500 mt-1">Configure active car models available for sales entries.</p>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Active Models</h1>
+                <p className="text-xs text-slate-500 mt-1">Configure active car models available for sales entries.</p>
               </div>
               <button
                 onClick={openAddCar}
-                className="h-9 px-4 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+                className="h-10 px-5 rounded-lg bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-semibold text-xs text-white cursor-pointer shadow-none active:scale-[0.98]"
               >
                 Add Model
               </button>
@@ -379,46 +388,46 @@ export default function AdminDashboard() {
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-                <span className="text-[11px] text-zinc-600">Retrieving catalog...</span>
+                <div className="w-6 h-6 border-2 border-t-slate-600 border-slate-200 rounded-full animate-spin" />
+                <span className="text-[11px] text-slate-400">Retrieving catalog...</span>
               </div>
             ) : (
-              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
                 {cars.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
-                    <span className="text-xs text-zinc-600">No vehicle models listed.</span>
+                  <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <span className="text-xs text-slate-400 font-medium">No vehicle models listed.</span>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
-                          <th className="pb-3 font-semibold">Model Name</th>
-                          <th className="pb-3 font-semibold">Suffix</th>
-                          <th className="pb-3 font-semibold">Variant</th>
-                          <th className="pb-3 text-right font-semibold">Actions</th>
+                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+                          <th className="pb-4 font-bold">Model Name</th>
+                          <th className="pb-4 font-bold">Suffix</th>
+                          <th className="pb-4 font-bold">Variant</th>
+                          <th className="pb-4 text-right font-bold">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-900">
+                      <tbody className="divide-y divide-slate-200">
                         {cars.map((car) => (
-                          <tr key={car._id} className="hover:bg-zinc-900/10 transition-colors">
-                            <td className="py-3.5 font-medium text-white">{car.modelName}</td>
-                            <td className="py-3.5 text-zinc-400">{car.baseSuffix}</td>
-                            <td className="py-3.5 text-zinc-550">
-                              <span className="px-2 py-0.5 rounded bg-zinc-900 text-[10px] border border-zinc-800 text-zinc-400 font-medium">
+                          <tr key={car._id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-4 font-semibold text-slate-900">{car.modelName}</td>
+                            <td className="py-4 text-slate-600">{car.baseSuffix}</td>
+                            <td className="py-4">
+                              <span className="px-2.5 py-1 rounded bg-slate-100 text-[10px] border border-slate-200 text-slate-700 font-semibold">
                                 {car.variant}
                               </span>
                             </td>
-                            <td className="py-3.5 text-right space-x-3">
+                            <td className="py-4 text-right space-x-4">
                               <button
                                 onClick={() => openEditCar(car)}
-                                className="text-zinc-500 hover:text-white transition-colors duration-150 cursor-pointer"
+                                className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => triggerDelete("car", car._id)}
-                                className="text-red-500 hover:text-red-400 transition-colors duration-150 cursor-pointer"
+                                className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
                               >
                                 Delete
                               </button>
@@ -434,17 +443,17 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- SCREEN 2: SLAB SETTINGS --- */}
+        {/* --- SCREEN 2: INCENTIVE RATE (SLABS) --- */}
         {activeTab === "slabs" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
               <div>
-                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Slab Settings</h1>
-                <p className="text-xs text-zinc-500 mt-1">Configure volume boundaries and dynamic incentive payouts.</p>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Incentive Rate</h1>
+                <p className="text-xs text-slate-500 mt-1">Configure volume boundaries and dynamic incentive payouts.</p>
               </div>
               <button
                 onClick={openAddSlab}
-                className="h-9 px-4 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+                className="h-10 px-5 rounded-lg bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-semibold text-xs text-white cursor-pointer shadow-none active:scale-[0.98]"
               >
                 Add Slab
               </button>
@@ -452,44 +461,44 @@ export default function AdminDashboard() {
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-                <span className="text-[11px] text-zinc-600">Retrieving slab settings...</span>
+                <div className="w-6 h-6 border-2 border-t-slate-600 border-slate-200 rounded-full animate-spin" />
+                <span className="text-[11px] text-slate-400">Retrieving slab settings...</span>
               </div>
             ) : (
-              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
                 {slabs.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
-                    <span className="text-xs text-zinc-600">No slabs configured.</span>
+                  <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <span className="text-xs text-slate-400 font-medium">No slabs configured.</span>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
-                          <th className="pb-3 font-semibold">Volume Range</th>
-                          <th className="pb-3 font-semibold">Incentive Per Car</th>
-                          <th className="pb-3 text-right font-semibold">Actions</th>
+                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+                          <th className="pb-4 font-bold">Volume Range</th>
+                          <th className="pb-4 font-bold">Incentive Per Car</th>
+                          <th className="pb-4 text-right font-bold">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-900">
+                      <tbody className="divide-y divide-slate-200">
                         {slabs.map((slab) => (
-                          <tr key={slab._id} className="hover:bg-zinc-900/10 transition-colors">
-                            <td className="py-3.5 font-medium text-white">
+                          <tr key={slab._id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-4 font-semibold text-slate-900">
                               {slab.minCars} {slab.maxCars === null ? "+ Cars" : `to ${slab.maxCars} Cars`}
                             </td>
-                            <td className="py-3.5 text-zinc-300 font-semibold">
+                            <td className="py-4 text-slate-900 font-bold text-sm">
                               ₹{slab.incentivePerCar.toLocaleString("en-IN")}
                             </td>
-                            <td className="py-3.5 text-right space-x-3">
+                            <td className="py-4 text-right space-x-4">
                               <button
                                 onClick={() => openEditSlab(slab)}
-                                className="text-zinc-500 hover:text-white transition-colors duration-150 cursor-pointer"
+                                className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => triggerDelete("slab", slab._id)}
-                                className="text-red-500 hover:text-red-400 transition-colors duration-150 cursor-pointer"
+                                className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
                               >
                                 Delete
                               </button>
@@ -505,59 +514,59 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- SCREEN 3: TOTAL PAYROLL BREAKDOWN --- */}
+        {/* --- SCREEN 3: TOTAL SALES (PAYROLL) --- */}
         {activeTab === "payroll" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
               <div>
-                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Total Payroll</h1>
-                <p className="text-xs text-zinc-500 mt-1">Review dealership performance metrics and aggregated incentive payouts.</p>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Total Sales</h1>
+                <p className="text-xs text-slate-500 mt-1">Review dealership performance metrics and aggregated incentive payouts.</p>
               </div>
 
               {/* Month Selector */}
-              <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-850 rounded px-3 py-1.5 self-start">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Select Month</span>
+              <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-4 py-2 self-start shadow-none">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Month</span>
                 <input
                   type="month"
                   value={selectedPayrollMonth}
                   onChange={(e) => setSelectedPayrollMonth(e.target.value)}
-                  className="bg-transparent border-none text-white text-xs font-semibold focus:outline-none cursor-pointer"
+                  className="bg-transparent border-none text-slate-900 text-xs font-semibold focus:outline-none cursor-pointer"
                 />
               </div>
             </div>
 
             {payrollLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-                <span className="text-[11px] text-zinc-600">Compiling payroll ledger...</span>
+                <div className="w-6 h-6 border-2 border-t-slate-600 border-slate-200 rounded-full animate-spin" />
+                <span className="text-[11px] text-slate-400">Compiling payroll ledger...</span>
               </div>
             ) : (
               <div className="space-y-6">
                 
                 {/* Aggregate Metrics Grid */}
                 {payrollMetrics && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Total Payout</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Total Payout</span>
                       <div className="text-2xl font-bold text-[#EB0A1E] tracking-tight">
                         ₹{payrollMetrics.totalPayrollPayout.toLocaleString("en-IN")}
                       </div>
                     </div>
-                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Cars Sold (Dealership)</span>
-                      <div className="text-2xl font-bold text-white tracking-tight">
+                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Cars Sold (Dealership)</span>
+                      <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.totalCarsSold} Cars
                       </div>
                     </div>
-                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Active Officers</span>
-                      <div className="text-2xl font-bold text-white tracking-tight">
+                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Active Officers</span>
+                      <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.totalOfficers} Officers
                       </div>
                     </div>
-                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Locked Submissions</span>
-                      <div className="text-2xl font-bold text-white tracking-tight">
+                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Locked Submissions</span>
+                      <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.lockedSubmissions} / {payrollMetrics.totalOfficers}
                       </div>
                     </div>
@@ -565,49 +574,47 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Payroll Ledger Table */}
-                <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
-                  <h3 className="text-sm font-medium text-white mb-4">Monthly Sales Ledger</h3>
+                <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
+                  <h3 className="text-sm font-bold text-slate-900 mb-6">Monthly Sales Ledger</h3>
                   
                   {payrollList.length === 0 ? (
-                    <div className="text-center py-12">
-                      <span className="text-xs text-zinc-650">No dealership logs registered.</span>
+                    <div className="text-center py-16">
+                      <span className="text-xs text-slate-400 font-medium">No dealership logs registered.</span>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
-                            <th className="pb-3 font-semibold">Officer</th>
-                            <th className="pb-3 font-semibold">Email</th>
-                            <th className="pb-3 font-semibold">Cars Sold</th>
-                            <th className="pb-3 font-semibold">Qualified Slab</th>
-                            <th className="pb-3 font-semibold">Total Payout</th>
-                            <th className="pb-3 text-right font-semibold">Status</th>
+                          <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+                            <th className="pb-4 font-bold">Officer</th>
+                            <th className="pb-4 font-bold">Email</th>
+                            <th className="pb-4 font-bold">Cars Sold</th>
+                            <th className="pb-4 font-bold">Qualified Slab</th>
+                            <th className="pb-4 font-bold">Total Payout</th>
+                            <th className="pb-4 text-right font-bold">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-900">
+                        <tbody className="divide-y divide-slate-200">
                           {payrollList.map((item) => (
-                            <tr key={item.officerId} className="hover:bg-zinc-900/10 transition-colors">
-                              <td className="py-3.5 font-bold text-white">{item.name}</td>
-                              <td className="py-3.5 text-zinc-450">{item.email}</td>
-                              <td className="py-3.5 text-zinc-300 font-semibold">{item.carsSold}</td>
-                              <td className="py-3.5">
-                                <span className="px-2 py-0.5 rounded text-[10px] bg-zinc-900 border border-zinc-850 text-zinc-400">
+                            <tr key={item.officerId} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-4 font-bold text-slate-900">{item.name}</td>
+                              <td className="py-4 text-slate-500">{item.email}</td>
+                              <td className="py-4 text-slate-900 font-semibold">{item.carsSold}</td>
+                              <td className="py-4">
+                                <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
                                   {item.slabRange}
                                 </span>
                               </td>
-                              <td className="py-3.5 font-bold text-[#EB0A1E]">
+                              <td className="py-4 font-bold text-[#EB0A1E] text-sm">
                                 ₹{item.payout.toLocaleString("en-IN")}
                               </td>
-                              <td className="py-3.5 text-right">
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
+                              <td className="py-4 text-right">
+                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
                                   item.status === "Locked"
-                                    ? "bg-red-950/20 border-red-900/50 text-red-400"
-                                    : item.status === "Draft"
-                                      ? "bg-zinc-900 border-zinc-800 text-zinc-400"
-                                      : "bg-zinc-950 border-transparent text-zinc-650"
-                                }`}>
-                                  {item.status}
+                                    ? "bg-green-50 border-green-200 text-green-800"
+                                    : "bg-amber-50 border-amber-200 text-amber-800"
+                                  }`}>
+                                  {item.status === "Locked" ? "Locked" : "Draft"}
                                 </span>
                               </td>
                             </tr>
@@ -622,44 +629,44 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- SCREEN 4: CHRONOLOGICAL USERS HISTORY --- */}
+        {/* --- SCREEN 4: PENDING APPROVALS (USERS HISTORY) --- */}
         {activeTab === "users" && (
           <div className="space-y-6">
-            <div className="border-b border-zinc-900 pb-6">
-              <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Users History</h1>
-              <p className="text-xs text-zinc-500 mt-1">Chronological audit ledger of all monthly submissions across the dealership.</p>
+            <div className="border-b border-slate-200 pb-6">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pending Approvals</h1>
+              <p className="text-xs text-slate-500 mt-1">Chronological audit ledger of all monthly submissions across the dealership.</p>
             </div>
 
             {historyLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-                <span className="text-[11px] text-zinc-600">Retrieving system ledger...</span>
+                <div className="w-6 h-6 border-2 border-t-slate-600 border-slate-200 rounded-full animate-spin" />
+                <span className="text-[11px] text-slate-400">Retrieving system ledger...</span>
               </div>
             ) : (
-              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
                 {historyList.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
-                    <span className="text-xs text-zinc-600">No transaction logs logged.</span>
+                  <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <span className="text-xs text-slate-400 font-medium">No transaction logs logged.</span>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
-                          <th className="pb-3 font-semibold">Timestamp</th>
-                          <th className="pb-3 font-semibold">Officer Name</th>
-                          <th className="pb-3 font-semibold">Email</th>
-                          <th className="pb-3 font-semibold">Month</th>
-                          <th className="pb-3 font-semibold">Cars Sold</th>
-                          <th className="pb-3 font-semibold">Qualified Slab</th>
-                          <th className="pb-3 font-semibold">Total Payout</th>
-                          <th className="pb-3 text-right font-semibold">Status</th>
+                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+                          <th className="pb-4 font-bold">Timestamp</th>
+                          <th className="pb-4 font-bold">Officer Name</th>
+                          <th className="pb-4 font-bold">Email</th>
+                          <th className="pb-4 font-bold">Month</th>
+                          <th className="pb-4 font-bold">Cars Sold</th>
+                          <th className="pb-4 font-bold">Qualified Slab</th>
+                          <th className="pb-4 font-bold">Total Payout</th>
+                          <th className="pb-4 text-right font-bold">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-900">
+                      <tbody className="divide-y divide-slate-200">
                         {historyList.map((log) => (
-                          <tr key={log._id} className="hover:bg-zinc-900/10 transition-colors">
-                            <td className="py-3.5 text-zinc-550 text-[10px]">
+                          <tr key={log._id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-4 text-slate-500 text-[10px]">
                               {new Date(log.updatedAt).toLocaleString("en-US", {
                                 month: "short",
                                 day: "numeric",
@@ -667,23 +674,23 @@ export default function AdminDashboard() {
                                 minute: "2-digit",
                               })}
                             </td>
-                            <td className="py-3.5 font-bold text-white">{log.name}</td>
-                            <td className="py-3.5 text-zinc-450">{log.email}</td>
-                            <td className="py-3.5 text-zinc-400 font-semibold uppercase">{log.month}</td>
-                            <td className="py-3.5 text-zinc-350">{log.totalCars}</td>
-                            <td className="py-3.5">
-                              <span className="px-2 py-0.5 rounded text-[10px] bg-zinc-900 border border-zinc-850 text-zinc-450 font-medium">
+                            <td className="py-4 font-bold text-slate-900">{log.name}</td>
+                            <td className="py-4 text-slate-500">{log.email}</td>
+                            <td className="py-4 text-slate-800 font-semibold uppercase">{log.month}</td>
+                            <td className="py-4 text-slate-900 font-semibold">{log.totalCars}</td>
+                            <td className="py-4">
+                              <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
                                 {log.slabRange}
                               </span>
                             </td>
-                            <td className="py-3.5 font-bold text-[#EB0A1E]">
+                            <td className="py-4 font-bold text-[#EB0A1E] text-sm">
                               ₹{log.totalIncentive.toLocaleString("en-IN")}
                             </td>
-                            <td className="py-3.5 text-right">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
+                            <td className="py-4 text-right">
+                              <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
                                 log.status === "submitted"
-                                  ? "bg-red-950/20 border-red-900/50 text-red-400"
-                                  : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                                  ? "bg-green-50 border-green-200 text-green-800"
+                                  : "bg-amber-50 border-amber-200 text-amber-800"
                               }`}>
                                 {log.status === "submitted" ? "Locked" : "Draft"}
                               </span>
@@ -703,62 +710,62 @@ export default function AdminDashboard() {
 
       {/* --- CAR CREATION/EDIT MODAL --- */}
       {carModal.open && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative">
-            <h3 className="text-sm font-semibold text-white mb-1">
-              {carModal.mode === "add" ? "Add Vehicle Model" : "Edit Vehicle Details"}
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Vehicle Details
             </h3>
-            <p className="text-[11px] text-zinc-500 mb-6">Enter vehicle taxonomy data.</p>
+            <p className="text-xs text-slate-500 mb-6">Enter details for the vehicle model.</p>
             
-            <form onSubmit={submitCar} className="space-y-4">
+            <form onSubmit={submitCar} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Model Name</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Model Name</label>
                 <input
                   type="text"
                   required
                   value={carForm.modelName}
                   onChange={(e) => setCarForm({ ...carForm, modelName: e.target.value })}
                   placeholder="e.g. Camry"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Base Suffix</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Base Suffix</label>
                 <input
                   type="text"
                   required
                   value={carForm.baseSuffix}
                   onChange={(e) => setCarForm({ ...carForm, baseSuffix: e.target.value })}
                   placeholder="e.g. SE"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Variant</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Variant</label>
                 <input
                   type="text"
                   required
                   value={carForm.variant}
                   onChange={(e) => setCarForm({ ...carForm, variant: e.target.value })}
                   placeholder="e.g. Gas"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-800 mt-6">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-150 mt-6">
                 <button
                   type="button"
                   onClick={() => setCarModal({ open: false, mode: "add" })}
-                  className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 font-medium"
+                  className="px-4 py-2 text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4.5 py-1.5 bg-[#EB0A1E] text-white hover:bg-red-700 transition-colors font-medium text-xs rounded active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 bg-[#EB0A1E] text-white hover:bg-red-700 transition-colors font-semibold text-xs rounded-lg shadow-none active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? "Saving..." : "Save Changes"}
                 </button>
@@ -770,16 +777,16 @@ export default function AdminDashboard() {
 
       {/* --- INCENTIVE SLAB CREATION/EDIT MODAL --- */}
       {slabModal.open && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative">
-            <h3 className="text-sm font-semibold text-white mb-1">
-              {slabModal.mode === "add" ? "Configure Slab" : "Modify Slab"}
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Incentive Rules
             </h3>
-            <p className="text-[11px] text-zinc-500 mb-6">Configure dynamic incentive threshold constraints.</p>
+            <p className="text-xs text-slate-500 mb-6">Set the sales ranges and incentive rates.</p>
             
-            <form onSubmit={submitSlab} className="space-y-4">
+            <form onSubmit={submitSlab} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Minimum Cars</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Minimum Cars</label>
                 <input
                   type="number"
                   min="0"
@@ -787,12 +794,12 @@ export default function AdminDashboard() {
                   value={slabForm.minCars}
                   onChange={(e) => setSlabForm({ ...slabForm, minCars: e.target.value })}
                   placeholder="e.g. 1"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Maximum Cars (Leave blank for Unlimited)
                 </label>
                 <input
@@ -801,12 +808,12 @@ export default function AdminDashboard() {
                   value={slabForm.maxCars}
                   onChange={(e) => setSlabForm({ ...slabForm, maxCars: e.target.value })}
                   placeholder="Leave empty for unlimited (+)"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Incentive Per Car (₹)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Incentive Per Car (₹)</label>
                 <input
                   type="number"
                   min="0"
@@ -814,22 +821,22 @@ export default function AdminDashboard() {
                   value={slabForm.incentivePerCar}
                   onChange={(e) => setSlabForm({ ...slabForm, incentivePerCar: e.target.value })}
                   placeholder="e.g. 1000"
-                  className="w-full h-9 px-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-650"
+                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors shadow-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-800 mt-6">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-150 mt-6">
                 <button
                   type="button"
                   onClick={() => setSlabModal({ open: false, mode: "add" })}
-                  className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 font-medium"
+                  className="px-4 py-2 text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4.5 py-1.5 bg-[#EB0A1E] text-white hover:bg-red-700 transition-colors font-medium text-xs rounded active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 bg-[#EB0A1E] text-white hover:bg-red-700 transition-colors font-semibold text-xs rounded-lg shadow-none active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
                   {actionLoading ? "Saving..." : "Save Changes"}
                 </button>
@@ -841,24 +848,24 @@ export default function AdminDashboard() {
 
       {/* --- CONFIRM DELETE DIALOG --- */}
       {deleteConfirm.open && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-xs p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative text-center">
-            <h3 className="text-sm font-semibold text-white mb-2">Delete Item</h3>
-            <p className="text-[11px] text-zinc-400 leading-relaxed mb-6">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative text-center animate-fade-in">
+            <h3 className="text-base font-bold text-slate-900 mb-2">Delete Item</h3>
+            <p className="text-xs text-slate-500 leading-relaxed mb-6">
               Delete this {deleteConfirm.type === "car" ? "vehicle model" : "incentive slab"}?
             </p>
 
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => setDeleteConfirm({ open: false, type: "car", id: "" })}
-                className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 font-medium cursor-pointer"
+                className="px-4 py-2 text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={actionLoading}
-                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-lg active:scale-[0.98] disabled:opacity-50 cursor-pointer"
               >
                 Delete
               </button>
