@@ -17,11 +17,6 @@ interface Slab {
   incentivePerCar: number;
 }
 
-interface SalesItem {
-  carId: string;
-  quantity: number;
-}
-
 interface RecordData {
   _id: string;
   month: string;
@@ -36,6 +31,9 @@ interface RecordData {
 
 export default function OfficerDashboard() {
   const router = useRouter();
+
+  // Navigation Tabs State: 'sales' | 'history'
+  const [activeTab, setActiveTab] = useState<"sales" | "history">("sales");
 
   // Month state (defaults to May 2026)
   const [selectedMonth, setSelectedMonth] = useState("2026-05");
@@ -247,7 +245,6 @@ export default function OfficerDashboard() {
       if (!response.ok) throw new Error(data.error || "Failed to save draft");
 
       setRecord(data.record);
-      // Refresh history log list
       if (data.record) {
         setHistory(prev => {
           const index = prev.findIndex(h => h.month === selectedMonth);
@@ -290,7 +287,6 @@ export default function OfficerDashboard() {
       if (!response.ok) throw new Error(data.error || "Failed to submit performance log");
 
       setRecord(data.record);
-      // Refresh history list
       if (data.record) {
         setHistory(prev => {
           const index = prev.findIndex(h => h.month === selectedMonth);
@@ -310,9 +306,9 @@ export default function OfficerDashboard() {
     }
   };
 
-  // Quick select helper
   const handleLoadMonth = (monthStr: string) => {
     setSelectedMonth(monthStr);
+    setActiveTab("sales");
   };
 
   return (
@@ -335,6 +331,29 @@ export default function OfficerDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Screen tabs Sub-Header */}
+      <nav className="w-full bg-zinc-950 border-b border-zinc-900 flex px-6 py-1 gap-2 z-10">
+        {[
+          { id: "sales", label: "Monthly Sales" },
+          { id: "history", label: "Sales History" },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3 py-3.5 text-xs font-semibold border-b-2 transition-all duration-150 cursor-pointer ${
+                isActive 
+                  ? "border-[#EB0A1E] text-white" 
+                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Main Workspace */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
@@ -360,7 +379,9 @@ export default function OfficerDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-zinc-900 pb-6">
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-white tracking-tight">Sales & Incentive Payouts</h1>
+              <h1 className="text-xl font-semibold text-white tracking-tight">
+                {activeTab === "sales" ? "Sales volume Entry" : "Sales History Logs"}
+              </h1>
               
               {/* Status Badge */}
               <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-bold border ${
@@ -412,272 +433,274 @@ export default function OfficerDashboard() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-2">
             <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-            <span className="text-[11px] text-zinc-600">Retrieving monthly parameters...</span>
+            <span className="text-[11px] text-zinc-600">Retrieving parameters...</span>
           </div>
         ) : (
           <div className="space-y-8">
             
-            {/* Top Workspace Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              
-              {/* COLUMN 1: Active vehicle logs form */}
-              <section className="lg:col-span-7 bg-zinc-950 border border-zinc-900 rounded-lg p-6">
-                <div className="flex items-center justify-between border-b border-zinc-900 pb-4 mb-6">
-                  <div>
-                    <h2 className="text-sm font-medium text-white">Monthly Sales</h2>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">Specify sales metrics per active model.</p>
-                  </div>
-                  
-                  {canEdit && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveRecord}
-                        disabled={saving || cars.length === 0}
-                        className="h-8 px-3 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 transition-colors font-medium text-xs text-zinc-300 active:scale-[0.98] cursor-pointer"
-                      >
-                        {saving ? "Saving..." : "Save Draft"}
-                      </button>
-                      
-                      <button
-                        onClick={() => setSubmitConfirmOpen(true)}
-                        disabled={submitting || cars.length === 0}
-                        className="h-8 px-3 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
-                      >
-                        {submitting ? "Submitting..." : "Submit Log"}
-                      </button>
+            {/* --- TAB 1: MONTHLY SALES ENTRY & CALCULATIONS --- */}
+            {activeTab === "sales" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {/* COLUMN 1: Active vehicle logs form */}
+                <section className="lg:col-span-7 bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                  <div className="flex items-center justify-between border-b border-zinc-900 pb-4 mb-6">
+                    <div>
+                      <h2 className="text-sm font-medium text-white">Monthly Sales</h2>
+                      <p className="text-[11px] text-zinc-600 mt-0.5">Specify sales metrics per active model.</p>
                     </div>
-                  )}
-                </div>
-
-                {cars.length === 0 ? (
-                  <div className="text-center py-16 border border-dashed border-zinc-800 rounded">
-                    <span className="text-xs text-zinc-600">No active vehicle models listed.</span>
+                    
+                    {canEdit && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveRecord}
+                          disabled={saving || cars.length === 0}
+                          className="h-8 px-3 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 transition-colors font-medium text-xs text-zinc-300 active:scale-[0.98] cursor-pointer"
+                        >
+                          {saving ? "Saving..." : "Save Draft"}
+                        </button>
+                        
+                        <button
+                          onClick={() => setSubmitConfirmOpen(true)}
+                          disabled={submitting || cars.length === 0}
+                          className="h-8 px-3 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+                        >
+                          {submitting ? "Submitting..." : "Submit Log"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {cars.map((car) => (
-                      <div
-                        key={car._id}
-                        className="p-4 rounded bg-zinc-900/30 border border-zinc-850 hover:border-zinc-800 transition-colors flex items-center justify-between"
-                      >
-                        <div>
-                          <h3 className="font-semibold text-white text-xs">{car.modelName}</h3>
-                          <div className="flex items-center gap-2 mt-1.5 text-[10px]">
-                            <span className="text-zinc-400 font-semibold px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-850">
-                              {car.baseSuffix}
-                            </span>
-                            <span className="text-zinc-500 font-light">{car.variant}</span>
+
+                  {cars.length === 0 ? (
+                    <div className="text-center py-16 border border-dashed border-zinc-800 rounded">
+                      <span className="text-xs text-zinc-600">No active vehicle models listed.</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {cars.map((car) => (
+                        <div
+                          key={car._id}
+                          className="p-4 rounded bg-zinc-900/30 border border-zinc-850 hover:border-zinc-800 transition-colors flex items-center justify-between"
+                        >
+                          <div>
+                            <h3 className="font-semibold text-white text-xs">{car.modelName}</h3>
+                            <div className="flex items-center gap-2 mt-1.5 text-[10px]">
+                              <span className="text-zinc-400 font-semibold px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-850">
+                                {car.baseSuffix}
+                              </span>
+                              <span className="text-zinc-500 font-light">{car.variant}</span>
+                            </div>
+                          </div>
+
+                          {/* Item Counters */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={!canEdit}
+                              onClick={() => decrementQty(car._id)}
+                              className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
+                            >
+                              &minus;
+                            </button>
+                            
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={!canEdit}
+                              value={salesQuantities[car._id] === 0 ? "" : salesQuantities[car._id]}
+                              onChange={(e) => updateQuantity(car._id, e.target.value)}
+                              placeholder="0"
+                              className="w-14 h-8 bg-zinc-950 border border-zinc-800 rounded text-center font-bold text-xs text-white focus:outline-none focus:border-zinc-700 disabled:opacity-50 appearance-none"
+                            />
+                            
+                            <button
+                              type="button"
+                              disabled={!canEdit}
+                              onClick={() => incrementQty(car._id)}
+                              className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
+                            >
+                              &#43;
+                            </button>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
-                        {/* Item Counters */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => decrementQty(car._id)}
-                            className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
-                          >
-                            &minus;
-                        </button>
-                          
-                          <input
-                            type="number"
-                            min="0"
-                            disabled={!canEdit}
-                            value={salesQuantities[car._id] === 0 ? "" : salesQuantities[car._id]}
-                            onChange={(e) => updateQuantity(car._id, e.target.value)}
-                            placeholder="0"
-                            className="w-14 h-8 bg-zinc-950 border border-zinc-800 rounded text-center font-bold text-xs text-white focus:outline-none focus:border-zinc-700 disabled:opacity-50 appearance-none"
-                          />
-                          
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => incrementQty(car._id)}
-                            className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
-                          >
-                            &#43;
-                          </button>
+                {/* COLUMN 2: Real-time calculation insights */}
+                <section className="lg:col-span-5 flex flex-col gap-6">
+                  
+                  {/* Payout breakdown card */}
+                  <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                    <h2 className="text-sm font-medium text-white mb-5">Incentive</h2>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                        <span className="text-xs text-zinc-500">Cars Sold</span>
+                        <span className="text-sm font-semibold text-white">{calculations.totalCars}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                        <span className="text-xs text-zinc-500">Qualified Slab</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-300">
+                          {calculations.qualifiedSlab}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                        <span className="text-xs text-zinc-500">Incentive per Car</span>
+                        <span className="text-xs font-semibold text-white">
+                          ₹{calculations.rate.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div className="pt-2 flex flex-col gap-1">
+                        <span className="text-xs text-zinc-500 block">Total Payout</span>
+                        <div className="text-3xl font-bold text-[#EB0A1E] tracking-tight">
+                          ₹{calculations.totalPayout.toLocaleString("en-IN")}
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  </div>
+
+                  {/* Progress tracker */}
+                  <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                    <h2 className="text-sm font-medium text-white mb-4">Slab Settings Tracker</h2>
+                    
+                    <div className="space-y-4">
+                      <p className="text-xs text-zinc-400 font-medium">
+                        {calculations.slabMessage}
+                      </p>
+
+                      {/* Minimal progress bar */}
+                      <div className="w-full h-1.5 rounded-full bg-zinc-900 overflow-hidden">
+                        <div
+                          className="h-full bg-[#EB0A1E] transition-all duration-300"
+                          style={{ width: `${calculations.progressPercentage}%` }}
+                        />
+                      </div>
+
+                      <div className="flex justify-between items-center text-[9px] text-zinc-600 font-semibold uppercase tracking-wider">
+                        <span>{calculations.totalCars} sold</span>
+                        <span>
+                          {isSubmitted 
+                            ? "Locked" 
+                            : calculations.nextSlab 
+                              ? `Target: ${calculations.nextSlab.minCars} cars`
+                              : "Maxed"
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Slab reference quick-table */}
+                  <div className="bg-zinc-950/40 border border-zinc-900/60 rounded-lg p-5">
+                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-3 block">Slab References</h3>
+                    <div className="space-y-2">
+                      {slabs.map((slab) => {
+                        const rangeLabel = `${slab.minCars}${slab.maxCars === null ? "+" : `–${slab.maxCars}`}`;
+                        const isActive = !isSubmitted && calculations.qualifiedSlab === rangeLabel;
+                        return (
+                          <div
+                            key={slab._id}
+                            className={`flex items-center justify-between text-xs p-2 rounded transition-colors ${
+                              isActive 
+                                ? "bg-zinc-900 border border-zinc-800 text-white font-medium" 
+                                : "bg-transparent text-zinc-500"
+                            }`}
+                          >
+                            <span>
+                              {slab.minCars}{slab.maxCars === null ? "+" : `–${slab.maxCars}`} Cars
+                            </span>
+                            <span className={isActive ? "text-[#EB0A1E]" : ""}>₹{slab.incentivePerCar.toLocaleString("en-IN")} / car</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </section>
+              </div>
+            )}
+
+            {/* --- TAB 2: DETAILED SALES HISTORY LOG --- */}
+            {activeTab === "history" && (
+              <section className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                <div className="border-b border-zinc-900 pb-4 mb-6">
+                  <h2 className="text-sm font-medium text-white">Sales History</h2>
+                  <p className="text-[11px] text-zinc-600 mt-0.5">Chronological summary of submitted monthly records and drafts.</p>
+                </div>
+
+                {history.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-zinc-800 rounded">
+                    <span className="text-xs text-zinc-600">No past monthly logs found.</span>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
+                          <th className="pb-3 font-semibold">Reporting Month</th>
+                          <th className="pb-3 font-semibold">Cars Sold</th>
+                          <th className="pb-3 font-semibold">Qualified Slab</th>
+                          <th className="pb-3 font-semibold">Total Payout</th>
+                          <th className="pb-3 font-semibold">Status</th>
+                          <th className="pb-3 text-right font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-900">
+                        {history.map((recordItem) => {
+                          const recMonth = recordItem.month;
+                          const isLoaded = selectedMonth === recMonth;
+                          
+                          const badgeStyle = recordItem.status === "submitted"
+                            ? "bg-red-950/20 border-red-900/50 text-red-400"
+                            : "bg-zinc-900 border-zinc-850 text-zinc-400";
+                          
+                          const slabLabel = recordItem.status === "submitted"
+                            ? recordItem.qualifiedSlabRangeAtSubmission || "None"
+                            : "Draft (Unsubmitted)";
+
+                          return (
+                            <tr key={recordItem._id} className={`hover:bg-zinc-900/10 transition-colors ${isLoaded ? "bg-zinc-900/10" : ""}`}>
+                              <td className="py-3.5 font-bold text-white uppercase">{recMonth}</td>
+                              <td className="py-3.5 text-zinc-450">{recordItem.totalCars}</td>
+                              <td className="py-3.5 text-zinc-500">
+                                <span className="px-2 py-0.5 rounded text-[10px] border border-zinc-850 text-zinc-455">
+                                  {slabLabel}
+                                </span>
+                              </td>
+                              <td className="py-3.5 text-[#EB0A1E] font-semibold">
+                                ₹{recordItem.totalIncentive.toLocaleString("en-IN")}
+                              </td>
+                              <td className="py-3.5">
+                                <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${badgeStyle}`}>
+                                  {recordItem.status === "submitted" ? "Locked" : "Draft"}
+                                </span>
+                              </td>
+                              <td className="py-3.5 text-right">
+                                <button
+                                  onClick={() => handleLoadMonth(recMonth)}
+                                  className={`text-xs font-semibold px-2 py-1 rounded transition-colors duration-150 cursor-pointer ${
+                                    isLoaded 
+                                      ? "bg-zinc-850 text-white border border-zinc-700" 
+                                      : "text-zinc-500 hover:text-white"
+                                  }`}
+                                >
+                                  {isLoaded ? "Loaded" : "Load Month"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </section>
-
-              {/* COLUMN 2: Real-time calculation insights */}
-              <section className="lg:col-span-5 flex flex-col gap-6">
-                
-                {/* Payout breakdown card */}
-                <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
-                  <h2 className="text-sm font-medium text-white mb-5">Incentive</h2>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                      <span className="text-xs text-zinc-500">Cars Sold</span>
-                      <span className="text-sm font-semibold text-white">{calculations.totalCars}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                      <span className="text-xs text-zinc-500">Qualified Slab</span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-300">
-                        {calculations.qualifiedSlab}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                      <span className="text-xs text-zinc-500">Incentive per Car</span>
-                      <span className="text-xs font-semibold text-white">
-                        ₹{calculations.rate.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-
-                    <div className="pt-2 flex flex-col gap-1">
-                      <span className="text-xs text-zinc-500 block">Total Payout</span>
-                      <div className="text-3xl font-bold text-[#EB0A1E] tracking-tight">
-                        ₹{calculations.totalPayout.toLocaleString("en-IN")}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress tracker */}
-                <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
-                  <h2 className="text-sm font-medium text-white mb-4">Slab Settings Tracker</h2>
-                  
-                  <div className="space-y-4">
-                    <p className="text-xs text-zinc-400 font-medium">
-                      {calculations.slabMessage}
-                    </p>
-
-                    {/* Minimal progress bar */}
-                    <div className="w-full h-1.5 rounded-full bg-zinc-900 overflow-hidden">
-                      <div
-                        className="h-full bg-[#EB0A1E] transition-all duration-300"
-                        style={{ width: `${calculations.progressPercentage}%` }}
-                      />
-                    </div>
-
-                    <div className="flex justify-between items-center text-[9px] text-zinc-600 font-semibold uppercase tracking-wider">
-                      <span>{calculations.totalCars} sold</span>
-                      <span>
-                        {isSubmitted 
-                          ? "Locked" 
-                          : calculations.nextSlab 
-                            ? `Target: ${calculations.nextSlab.minCars} cars`
-                            : "Maxed"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Slab reference quick-table */}
-                <div className="bg-zinc-950/40 border border-zinc-900/60 rounded-lg p-5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-3 block">Slab References</h3>
-                  <div className="space-y-2">
-                    {slabs.map((slab) => {
-                      const rangeLabel = `${slab.minCars}${slab.maxCars === null ? "+" : `–${slab.maxCars}`}`;
-                      const isActive = !isSubmitted && calculations.qualifiedSlab === rangeLabel;
-                      return (
-                        <div
-                          key={slab._id}
-                          className={`flex items-center justify-between text-xs p-2 rounded transition-colors ${
-                            isActive 
-                              ? "bg-zinc-900 border border-zinc-800 text-white font-medium" 
-                              : "bg-transparent text-zinc-500"
-                          }`}
-                        >
-                          <span>
-                            {slab.minCars}{slab.maxCars === null ? "+" : `–${slab.maxCars}`} Cars
-                          </span>
-                          <span className={isActive ? "text-[#EB0A1E]" : ""}>₹{slab.incentivePerCar.toLocaleString("en-IN")} / car</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              </section>
-
-            </div>
-
-            {/* --- DETAILED SALES HISTORY TAB SECTION --- */}
-            <section className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
-              <div className="border-b border-zinc-900 pb-4 mb-6">
-                <h2 className="text-sm font-medium text-white">Sales History</h2>
-                <p className="text-[11px] text-zinc-600 mt-0.5">Chronological summary of submitted monthly records and drafts.</p>
-              </div>
-
-              {history.length === 0 ? (
-                <div className="text-center py-8 border border-dashed border-zinc-800 rounded">
-                  <span className="text-xs text-zinc-600">No past monthly logs found.</span>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
-                        <th className="pb-3 font-semibold">Reporting Month</th>
-                        <th className="pb-3 font-semibold">Cars Sold</th>
-                        <th className="pb-3 font-semibold">Qualified Slab</th>
-                        <th className="pb-3 font-semibold">Total Payout</th>
-                        <th className="pb-3 font-semibold">Status</th>
-                        <th className="pb-3 text-right font-semibold">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-900">
-                      {history.map((recordItem) => {
-                        const recMonth = recordItem.month;
-                        const isLoaded = selectedMonth === recMonth;
-                        
-                        // Parse status label and visual classes
-                        const badgeStyle = recordItem.status === "submitted"
-                          ? "bg-red-950/20 border-red-900/50 text-red-400"
-                          : "bg-zinc-900 border-zinc-850 text-zinc-400";
-                        
-                        const slabLabel = recordItem.status === "submitted"
-                          ? recordItem.qualifiedSlabRangeAtSubmission || "None"
-                          : "Draft (Unsubmitted)";
-
-                        return (
-                          <tr key={recordItem._id} className={`hover:bg-zinc-900/10 transition-colors ${isLoaded ? "bg-zinc-900/10" : ""}`}>
-                            <td className="py-3.5 font-bold text-white uppercase">{recMonth}</td>
-                            <td className="py-3.5 text-zinc-450">{recordItem.totalCars}</td>
-                            <td className="py-3.5 text-zinc-500">
-                              <span className="px-2 py-0.5 rounded text-[10px] border border-zinc-850 text-zinc-450">
-                                {slabLabel}
-                              </span>
-                            </td>
-                            <td className="py-3.5 text-[#EB0A1E] font-semibold">
-                              ₹{recordItem.totalIncentive.toLocaleString("en-IN")}
-                            </td>
-                            <td className="py-3.5">
-                              <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${badgeStyle}`}>
-                                {recordItem.status === "submitted" ? "Locked" : "Draft"}
-                              </span>
-                            </td>
-                            <td className="py-3.5 text-right">
-                              <button
-                                onClick={() => handleLoadMonth(recMonth)}
-                                className={`text-xs font-semibold px-2 py-1 rounded transition-colors duration-150 cursor-pointer ${
-                                  isLoaded 
-                                    ? "bg-zinc-850 text-white border border-zinc-700" 
-                                    : "text-zinc-500 hover:text-white"
-                                }`}
-                              >
-                                {isLoaded ? "Loaded" : "Load Month"}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+            )}
 
           </div>
         )}
