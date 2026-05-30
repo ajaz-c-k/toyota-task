@@ -37,12 +37,18 @@ export async function GET(request: Request) {
       month,
     });
 
+    // Fetch all historical monthly records for this officer
+    const history = await SalesRecord.find({
+      officerId: salesUser.id,
+    }).sort({ month: -1 });
+
     return NextResponse.json({
       success: true,
       cars,
       slabs,
       currentMonth,
       record: record || null,
+      history,
     });
   } catch (error: any) {
     console.error("GET Sales API Error:", error);

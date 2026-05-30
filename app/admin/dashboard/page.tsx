@@ -17,10 +17,44 @@ interface Slab {
   incentivePerCar: number;
 }
 
+interface PayrollItem {
+  officerId: string;
+  name: string;
+  email: string;
+  carsSold: number;
+  payout: number;
+  status: string;
+  slabRange: string;
+}
+
+interface PayrollMetrics {
+  totalCarsSold: number;
+  totalPayrollPayout: number;
+  totalOfficers: number;
+  lockedSubmissions: number;
+  reportingRate: number;
+}
+
+interface UserHistoryItem {
+  _id: string;
+  officerId: string | null;
+  name: string;
+  email: string;
+  month: string;
+  totalCars: number;
+  totalIncentive: number;
+  status: string;
+  slabRange: string;
+  updatedAt: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   
-  // States
+  // Navigation Tabs State: 'inventory' | 'slabs' | 'payroll' | 'users'
+  const [activeTab, setActiveTab] = useState<"inventory" | "slabs" | "payroll" | "users">("inventory");
+
+  // Configurations Data State
   const [cars, setCars] = useState<Car[]>([]);
   const [slabs, setSlabs] = useState<Slab[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +62,17 @@ export default function AdminDashboard() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Modals
+  // Payroll Tab Data State
+  const [selectedPayrollMonth, setSelectedPayrollMonth] = useState("2026-05");
+  const [payrollList, setPayrollList] = useState<PayrollItem[]>([]);
+  const [payrollMetrics, setPayrollMetrics] = useState<PayrollMetrics | null>(null);
+  const [payrollLoading, setPayrollLoading] = useState(false);
+
+  // Users History Tab Data State
+  const [historyList, setHistoryList] = useState<UserHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Modals Forms State
   const [carModal, setCarModal] = useState<{ open: boolean; mode: "add" | "edit"; data?: Car }>({ open: false, mode: "add" });
   const [carForm, setCarForm] = useState({ modelName: "", baseSuffix: "", variant: "" });
   
@@ -37,9 +81,24 @@ export default function AdminDashboard() {
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; type: "car" | "slab"; id: string }>({ open: false, type: "car", id: "" });
 
+  // Initial load
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Fetch Payroll on demand
+  useEffect(() => {
+    if (activeTab === "payroll") {
+      fetchPayrollData();
+    }
+  }, [activeTab, selectedPayrollMonth]);
+
+  // Fetch Chronological History on demand
+  useEffect(() => {
+    if (activeTab === "users") {
+      fetchUsersHistory();
+    }
+  }, [activeTab]);
 
   const fetchDashboardData = async () => {
     try {
@@ -59,6 +118,43 @@ export default function AdminDashboard() {
       triggerToast("Error loading panel configuration", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPayrollData = async () => {
+    try {
+      setPayrollLoading(true);
+      const res = await fetch(`/api/admin/payroll?month=${selectedPayrollMonth}`);
+      const data = await res.json();
+      if (data.success) {
+        setPayrollList(data.payroll);
+        setPayrollMetrics(data.metrics);
+      } else {
+        triggerToast("Failed to compile payroll metrics", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Failed to compile payroll metrics", "error");
+    } finally {
+      setPayrollLoading(false);
+    }
+  };
+
+  const fetchUsersHistory = async () => {
+    try {
+      setHistoryLoading(true);
+      const res = await fetch("/api/admin/users/history");
+      const data = await res.json();
+      if (data.success) {
+        setHistoryList(data.history);
+      } else {
+        triggerToast("Failed to retrieve chronological logs", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast("Failed to retrieve chronological logs", "error");
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -82,7 +178,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Car Actions
+  // --- CAR ACTIONS ---
   const openAddCar = () => {
     setCarForm({ modelName: "", baseSuffix: "", variant: "" });
     setCarModal({ open: true, mode: "add" });
@@ -122,7 +218,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Slab Actions
+  // --- SLAB ACTIONS ---
   const openAddSlab = () => {
     setSlabForm({ minCars: "", maxCars: "", incentivePerCar: "" });
     setSlabModal({ open: true, mode: "add" });
@@ -170,7 +266,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Delete Action
+  // --- DELETE CONFIRMS ---
   const triggerDelete = (type: "car" | "slab", id: string) => {
     setDeleteConfirm({ open: true, type, id });
   };
@@ -220,7 +316,32 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Screen tabs Sub-Header */}
+      <nav className="w-full bg-zinc-950 border-b border-zinc-900 flex px-6 py-1 gap-2 z-10">
+        {[
+          { id: "inventory", label: "Vehicle Models" },
+          { id: "slabs", label: "Slab Settings" },
+          { id: "payroll", label: "Total Payroll" },
+          { id: "users", label: "Users History" },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3 py-3.5 text-xs font-semibold border-b-2 transition-all duration-150 cursor-pointer ${
+                isActive 
+                  ? "border-[#EB0A1E] text-white" 
+                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Main Workspace */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
         
         {/* Toast Alerts */}
@@ -240,67 +361,29 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Dashboard Title */}
-        <div className="mb-8 flex flex-col items-start border-b border-zinc-900 pb-6">
-          <h1 className="text-xl font-semibold text-white tracking-tight">Configuration Settings</h1>
-          <p className="text-xs text-zinc-500 mt-1">
-            Manage authorized vehicle models and incentive calculation parameters.
-          </p>
-        </div>
-
-        {/* Muted Metrics Section */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Vehicle Models</span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-semibold text-white tracking-tight">{cars.length}</span>
-              <span className="text-[10px] text-zinc-600 font-medium">active in system</span>
-            </div>
-          </div>
-          
-          <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Active Slabs</span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-semibold text-[#EB0A1E] tracking-tight">{slabs.length}</span>
-              <span className="text-[10px] text-zinc-600 font-medium">configured ranges</span>
-            </div>
-          </div>
-          
-          <div className="p-4 rounded border border-zinc-900 bg-zinc-950 sm:col-span-2 lg:col-span-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Last Update Check</span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-semibold text-white tracking-tight">
-                {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-              </span>
-              <span className="text-[10px] text-zinc-600 font-medium">Automatic</span>
-            </div>
-          </div>
-        </section>
-
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-2">
-            <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
-            <span className="text-[11px] text-zinc-600">Loading configurations...</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Fleet Column */}
-            <section className="bg-zinc-950 border border-zinc-900 rounded-lg p-6 flex flex-col justify-between">
+        {/* --- SCREEN 1: VEHICLE MODELS (INVENTORY) --- */}
+        {activeTab === "inventory" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-sm font-medium text-white">Vehicle Models</h2>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">Active models catalog.</p>
-                  </div>
-                  <button
-                    onClick={openAddCar}
-                    className="h-8 px-3 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
-                  >
-                    Add Model
-                  </button>
-                </div>
+                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Vehicle Models</h1>
+                <p className="text-xs text-zinc-500 mt-1">Configure active car models available for sales entries.</p>
+              </div>
+              <button
+                onClick={openAddCar}
+                className="h-9 px-4 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+              >
+                Add Model
+              </button>
+            </div>
 
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
+                <span className="text-[11px] text-zinc-600">Retrieving catalog...</span>
+              </div>
+            ) : (
+              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
                 {cars.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
                     <span className="text-xs text-zinc-600">No vehicle models listed.</span>
@@ -321,23 +404,21 @@ export default function AdminDashboard() {
                           <tr key={car._id} className="hover:bg-zinc-900/10 transition-colors">
                             <td className="py-3.5 font-medium text-white">{car.modelName}</td>
                             <td className="py-3.5 text-zinc-400">{car.baseSuffix}</td>
-                            <td className="py-3.5 text-zinc-500">
+                            <td className="py-3.5 text-zinc-550">
                               <span className="px-2 py-0.5 rounded bg-zinc-900 text-[10px] border border-zinc-800 text-zinc-400 font-medium">
                                 {car.variant}
                               </span>
                             </td>
-                            <td className="py-3.5 text-right space-x-2">
+                            <td className="py-3.5 text-right space-x-3">
                               <button
                                 onClick={() => openEditCar(car)}
                                 className="text-zinc-500 hover:text-white transition-colors duration-150 cursor-pointer"
-                                title="Edit"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => triggerDelete("car", car._id)}
                                 className="text-red-500 hover:text-red-400 transition-colors duration-150 cursor-pointer"
-                                title="Delete"
                               >
                                 Delete
                               </button>
@@ -349,27 +430,36 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
-            </section>
+            )}
+          </div>
+        )}
 
-            {/* Slabs Column */}
-            <section className="bg-zinc-950 border border-zinc-900 rounded-lg p-6 flex flex-col justify-between">
+        {/* --- SCREEN 2: SLAB SETTINGS --- */}
+        {activeTab === "slabs" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-sm font-medium text-white">Slab Settings</h2>
-                    <p className="text-[11px] text-zinc-600 mt-0.5">Range and per-car incentive configurations.</p>
-                  </div>
-                  <button
-                    onClick={openAddSlab}
-                    className="h-8 px-3 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
-                  >
-                    Add Slab
-                  </button>
-                </div>
+                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Slab Settings</h1>
+                <p className="text-xs text-zinc-500 mt-1">Configure volume boundaries and dynamic incentive payouts.</p>
+              </div>
+              <button
+                onClick={openAddSlab}
+                className="h-9 px-4 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors duration-150 font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+              >
+                Add Slab
+              </button>
+            </div>
 
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
+                <span className="text-[11px] text-zinc-600">Retrieving slab settings...</span>
+              </div>
+            ) : (
+              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
                 {slabs.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
-                    <span className="text-xs text-zinc-600">No incentive slabs configured.</span>
+                    <span className="text-xs text-zinc-600">No slabs configured.</span>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -390,18 +480,16 @@ export default function AdminDashboard() {
                             <td className="py-3.5 text-zinc-300 font-semibold">
                               ₹{slab.incentivePerCar.toLocaleString("en-IN")}
                             </td>
-                            <td className="py-3.5 text-right space-x-2">
+                            <td className="py-3.5 text-right space-x-3">
                               <button
                                 onClick={() => openEditSlab(slab)}
                                 className="text-zinc-500 hover:text-white transition-colors duration-150 cursor-pointer"
-                                title="Edit"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => triggerDelete("slab", slab._id)}
                                 className="text-red-500 hover:text-red-400 transition-colors duration-150 cursor-pointer"
-                                title="Delete"
                               >
                                 Delete
                               </button>
@@ -413,13 +501,207 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
-            </section>
-
+            )}
           </div>
         )}
+
+        {/* --- SCREEN 3: TOTAL PAYROLL BREAKDOWN --- */}
+        {activeTab === "payroll" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-6">
+              <div>
+                <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Total Payroll</h1>
+                <p className="text-xs text-zinc-500 mt-1">Review dealership performance metrics and aggregated incentive payouts.</p>
+              </div>
+
+              {/* Month Selector */}
+              <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-850 rounded px-3 py-1.5 self-start">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Select Month</span>
+                <input
+                  type="month"
+                  value={selectedPayrollMonth}
+                  onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                  className="bg-transparent border-none text-white text-xs font-semibold focus:outline-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {payrollLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
+                <span className="text-[11px] text-zinc-600">Compiling payroll ledger...</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                
+                {/* Aggregate Metrics Grid */}
+                {payrollMetrics && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Total Payout</span>
+                      <div className="text-2xl font-bold text-[#EB0A1E] tracking-tight">
+                        ₹{payrollMetrics.totalPayrollPayout.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Cars Sold (Dealership)</span>
+                      <div className="text-2xl font-bold text-white tracking-tight">
+                        {payrollMetrics.totalCarsSold} Cars
+                      </div>
+                    </div>
+                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Active Officers</span>
+                      <div className="text-2xl font-bold text-white tracking-tight">
+                        {payrollMetrics.totalOfficers} Officers
+                      </div>
+                    </div>
+                    <div className="p-4 rounded border border-zinc-900 bg-zinc-950">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1">Locked Submissions</span>
+                      <div className="text-2xl font-bold text-white tracking-tight">
+                        {payrollMetrics.lockedSubmissions} / {payrollMetrics.totalOfficers}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payroll Ledger Table */}
+                <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                  <h3 className="text-sm font-medium text-white mb-4">Monthly Sales Ledger</h3>
+                  
+                  {payrollList.length === 0 ? (
+                    <div className="text-center py-12">
+                      <span className="text-xs text-zinc-650">No dealership logs registered.</span>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
+                            <th className="pb-3 font-semibold">Officer</th>
+                            <th className="pb-3 font-semibold">Email</th>
+                            <th className="pb-3 font-semibold">Cars Sold</th>
+                            <th className="pb-3 font-semibold">Qualified Slab</th>
+                            <th className="pb-3 font-semibold">Total Payout</th>
+                            <th className="pb-3 text-right font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-900">
+                          {payrollList.map((item) => (
+                            <tr key={item.officerId} className="hover:bg-zinc-900/10 transition-colors">
+                              <td className="py-3.5 font-bold text-white">{item.name}</td>
+                              <td className="py-3.5 text-zinc-450">{item.email}</td>
+                              <td className="py-3.5 text-zinc-300 font-semibold">{item.carsSold}</td>
+                              <td className="py-3.5">
+                                <span className="px-2 py-0.5 rounded text-[10px] bg-zinc-900 border border-zinc-850 text-zinc-400">
+                                  {item.slabRange}
+                                </span>
+                              </td>
+                              <td className="py-3.5 font-bold text-[#EB0A1E]">
+                                ₹{item.payout.toLocaleString("en-IN")}
+                              </td>
+                              <td className="py-3.5 text-right">
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
+                                  item.status === "Locked"
+                                    ? "bg-red-950/20 border-red-900/50 text-red-400"
+                                    : item.status === "Draft"
+                                      ? "bg-zinc-900 border-zinc-800 text-zinc-400"
+                                      : "bg-zinc-950 border-transparent text-zinc-650"
+                                }`}>
+                                  {item.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- SCREEN 4: CHRONOLOGICAL USERS HISTORY --- */}
+        {activeTab === "users" && (
+          <div className="space-y-6">
+            <div className="border-b border-zinc-900 pb-6">
+              <h1 className="text-xl font-semibold text-white tracking-tight font-sans">Users History</h1>
+              <p className="text-xs text-zinc-500 mt-1">Chronological audit ledger of all monthly submissions across the dealership.</p>
+            </div>
+
+            {historyLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <div className="w-5 h-5 border-2 border-t-zinc-400 border-zinc-900 rounded-full animate-spin" />
+                <span className="text-[11px] text-zinc-600">Retrieving system ledger...</span>
+              </div>
+            ) : (
+              <div className="bg-zinc-950 border border-zinc-900 rounded-lg p-6">
+                {historyList.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded">
+                    <span className="text-xs text-zinc-600">No transaction logs logged.</span>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold text-[10px] uppercase tracking-wider">
+                          <th className="pb-3 font-semibold">Timestamp</th>
+                          <th className="pb-3 font-semibold">Officer Name</th>
+                          <th className="pb-3 font-semibold">Email</th>
+                          <th className="pb-3 font-semibold">Month</th>
+                          <th className="pb-3 font-semibold">Cars Sold</th>
+                          <th className="pb-3 font-semibold">Qualified Slab</th>
+                          <th className="pb-3 font-semibold">Total Payout</th>
+                          <th className="pb-3 text-right font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-900">
+                        {historyList.map((log) => (
+                          <tr key={log._id} className="hover:bg-zinc-900/10 transition-colors">
+                            <td className="py-3.5 text-zinc-550 text-[10px]">
+                              {new Date(log.updatedAt).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </td>
+                            <td className="py-3.5 font-bold text-white">{log.name}</td>
+                            <td className="py-3.5 text-zinc-450">{log.email}</td>
+                            <td className="py-3.5 text-zinc-400 font-semibold uppercase">{log.month}</td>
+                            <td className="py-3.5 text-zinc-350">{log.totalCars}</td>
+                            <td className="py-3.5">
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-zinc-900 border border-zinc-850 text-zinc-450 font-medium">
+                                {log.slabRange}
+                              </span>
+                            </td>
+                            <td className="py-3.5 font-bold text-[#EB0A1E]">
+                              ₹{log.totalIncentive.toLocaleString("en-IN")}
+                            </td>
+                            <td className="py-3.5 text-right">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
+                                log.status === "submitted"
+                                  ? "bg-red-950/20 border-red-900/50 text-red-400"
+                                  : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                              }`}>
+                                {log.status === "submitted" ? "Locked" : "Draft"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
 
-      {/* Car Modal */}
+      {/* --- CAR CREATION/EDIT MODAL --- */}
       {carModal.open && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative">
@@ -486,7 +768,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Slab Modal */}
+      {/* --- INCENTIVE SLAB CREATION/EDIT MODAL --- */}
       {slabModal.open && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative">
@@ -557,7 +839,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Delete Confirmation */}
+      {/* --- CONFIRM DELETE DIALOG --- */}
       {deleteConfirm.open && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-xs p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative text-center">
