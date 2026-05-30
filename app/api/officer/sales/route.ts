@@ -19,6 +19,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "A valid month parameter (YYYY-MM) is required." }, { status: 400 });
     }
 
+    // Dynamic current month determination based on server time
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
     await connectDB();
 
     // Fetch active inventory and slabs
@@ -37,6 +41,7 @@ export async function GET(request: Request) {
       success: true,
       cars,
       slabs,
+      currentMonth,
       record: record || null,
     });
   } catch (error: any) {
@@ -53,14 +58,31 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
-    const { month, sales } = await request.json();
+    const { month, sales, submit } = await request.json();
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
       return NextResponse.json({ error: "A valid month (YYYY-MM) is required." }, { status: 400 });
     }
 
+    // Rule check: Only the current month can be edited
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    if (month !== currentMonth) {
+      return NextResponse.json({ error: "Only the current month can be edited." }, { status: 400 });
+    }
+
     if (!Array.isArray(sales)) {
       return NextResponse.json({ error: "Sales must be a valid array." }, { status: 400 });
+    }
+
+    // Lock check: check if already submitted
+    const existingRecord = await SalesRecord.findOne({
+      officerId: salesUser.id,
+      month,
+    });
+
+    if (existingRecord && existingRecord.status === "submitted") {
+      return NextResponse.json({ error: "This month is locked and cannot be modified." }, { status: 400 });
     }
 
     // Validate quantities and build clean array
@@ -73,7 +95,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Quantities must be positive integers." }, { status: 400 });
       }
 
-      // Skip 0 entries if desired or keep them; let's keep them but clean them up
       formattedSales.push({
         carId: item.carId,
         quantity,
@@ -99,16 +120,28 @@ export async function POST(request: Request) {
     }
 
     const totalIncentive = totalCars * rate;
+    const isSubmitting = submit === true;
 
     // Save or update the record
+    const recordUpdate: any = {
+      sales: formattedSales,
+      totalCars,
+      totalIncentive,
+      qualifiedSlabId: qualifiedSlab ? qualifiedSlab._id : null,
+      status: isSubmitting ? "submitted" : "draft",
+    };
+
+    // If submitting, freeze the qualified slab details at this timestamp
+    if (isSubmitting) {
+      recordUpdate.qualifiedSlabRateAtSubmission = rate;
+      recordUpdate.qualifiedSlabRangeAtSubmission = qualifiedSlab
+        ? `${qualifiedSlab.minCars}${qualifiedSlab.maxCars === null ? "+" : `–${qualifiedSlab.maxCars}`}`
+        : "None";
+    }
+
     const updatedRecord = await SalesRecord.findOneAndUpdate(
       { officerId: salesUser.id, month },
-      {
-        sales: formattedSales,
-        totalCars,
-        totalIncentive,
-        qualifiedSlabId: qualifiedSlab ? qualifiedSlab._id : null,
-      },
+      recordUpdate,
       { upsert: true, new: true }
     );
 

@@ -17,16 +17,39 @@ interface Slab {
   incentivePerCar: number;
 }
 
+interface SalesItem {
+  carId: string;
+  quantity: number;
+}
+
+interface RecordData {
+  _id: string;
+  month: string;
+  sales: { carId: string; quantity: number }[];
+  totalCars: number;
+  totalIncentive: number;
+  qualifiedSlabId: string | null;
+  status: "draft" | "submitted";
+  qualifiedSlabRateAtSubmission: number;
+  qualifiedSlabRangeAtSubmission: string;
+}
+
 export default function OfficerDashboard() {
   const router = useRouter();
 
-  // Selected Month: Default to current (May 2026 as per local time)
+  // Month state (defaults to May 2026)
   const [selectedMonth, setSelectedMonth] = useState("2026-05");
+  const [currentMonth, setCurrentMonth] = useState("2026-05");
   
   const [cars, setCars] = useState<Car[]>([]);
   const [slabs, setSlabs] = useState<Slab[]>([]);
+  const [record, setRecord] = useState<RecordData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Submit confirmation dialog
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   // local counters
   const [salesQuantities, setSalesQuantities] = useState<Record<string, number>>({});
@@ -47,6 +70,8 @@ export default function OfficerDashboard() {
       if (data.success) {
         setCars(data.cars);
         setSlabs(data.slabs);
+        setCurrentMonth(data.currentMonth);
+        setRecord(data.record);
 
         const qtyMap: Record<string, number> = {};
         
@@ -106,8 +131,29 @@ export default function OfficerDashboard() {
     }));
   };
 
-  // Real-time calculations
+  // Status checks
+  const isSubmitted = record?.status === "submitted";
+  const isCurrentMonth = selectedMonth === currentMonth;
+  const isPastMonth = selectedMonth < currentMonth;
+  const isFutureMonth = selectedMonth > currentMonth;
+  const canEdit = isCurrentMonth && !isSubmitted;
+
+  // Real-time calculations or Immutable past calculations
   const calculations = useMemo(() => {
+    // 1. If already submitted, read static frozen snapshots directly from record
+    if (isSubmitted && record) {
+      return {
+        totalCars: record.totalCars,
+        qualifiedSlab: record.qualifiedSlabRangeAtSubmission || "None",
+        rate: record.qualifiedSlabRateAtSubmission || 0,
+        totalPayout: record.totalIncentive,
+        progressPercentage: 100,
+        slabMessage: "This month is locked. Payout rate is frozen and immune to dynamic slab changes.",
+        nextSlab: null,
+      };
+    }
+
+    // 2. Otherwise (draft or new record), calculate dynamically based on active slabs
     let totalCars = 0;
     Object.values(salesQuantities).forEach((qty) => {
       totalCars += qty;
@@ -157,15 +203,14 @@ export default function OfficerDashboard() {
 
     return {
       totalCars,
-      qualifiedSlab,
+      qualifiedSlab: qualifiedSlab ? `${qualifiedSlab.minCars}${qualifiedSlab.maxCars === null ? "+" : `–${qualifiedSlab.maxCars}`}` : "None",
       rate,
       totalPayout,
-      nextSlab,
-      carsNeeded,
       progressPercentage,
       slabMessage,
+      nextSlab,
     };
-  }, [salesQuantities, slabs]);
+  }, [salesQuantities, slabs, record, isSubmitted]);
 
   const handleLogout = async () => {
     try {
@@ -177,7 +222,9 @@ export default function OfficerDashboard() {
     }
   };
 
+  // Save draft performance
   const handleSaveRecord = async () => {
+    if (!canEdit) return;
     setSaving(true);
     try {
       const salesPayload = Object.entries(salesQuantities).map(([carId, quantity]) => ({
@@ -191,17 +238,51 @@ export default function OfficerDashboard() {
         body: JSON.stringify({
           month: selectedMonth,
           sales: salesPayload,
+          submit: false,
         }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to persist sales metrics");
+      if (!response.ok) throw new Error(data.error || "Failed to save draft");
 
-      triggerNotification(`Sales history saved successfully for ${selectedMonth}!`, "success");
+      setRecord(data.record);
+      triggerNotification("Draft saved successfully.", "success");
     } catch (err: any) {
       triggerNotification(err.message, "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Confirm month lock and submit
+  const handleConfirmSubmit = async () => {
+    setSubmitConfirmOpen(false);
+    setSubmitting(true);
+    try {
+      const salesPayload = Object.entries(salesQuantities).map(([carId, quantity]) => ({
+        carId,
+        quantity,
+      }));
+
+      const response = await fetch("/api/officer/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month: selectedMonth,
+          sales: salesPayload,
+          submit: true,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to submit performance log");
+
+      setRecord(data.record);
+      triggerNotification(`Month ${selectedMonth} submitted and permanently locked.`, "success");
+    } catch (err: any) {
+      triggerNotification(err.message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -248,8 +329,21 @@ export default function OfficerDashboard() {
 
         {/* Dashboard Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-zinc-900 pb-6">
-          <div>
-            <h1 className="text-xl font-semibold text-white tracking-tight">Sales & Incentive Payouts</h1>
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-white tracking-tight">Sales & Incentive Payouts</h1>
+              
+              {/* Status Badge */}
+              <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-bold border ${
+                isSubmitted 
+                  ? "bg-red-950/20 border-red-900/50 text-red-400" 
+                  : isCurrentMonth
+                    ? "bg-zinc-900 border-zinc-800 text-zinc-400"
+                    : "bg-amber-950/20 border-amber-900/40 text-amber-500"
+              }`}>
+                {isSubmitted ? "Locked" : isCurrentMonth ? "Draft" : "Read-Only"}
+              </span>
+            </div>
             <p className="text-xs text-zinc-500 mt-1">Log monthly sales and calculate corresponding dynamic incentive rates.</p>
           </div>
           
@@ -264,6 +358,27 @@ export default function OfficerDashboard() {
             />
           </div>
         </div>
+
+        {/* Notification Banners */}
+        {!loading && (
+          <div className="mb-6">
+            {isSubmitted && (
+              <div className="p-3 rounded bg-zinc-950 border border-zinc-900 text-xs text-zinc-500">
+                🔒 This month's performance log is submitted and locked. Dynamic admin changes will not affect this payout.
+              </div>
+            )}
+            {!isSubmitted && isPastMonth && (
+              <div className="p-3 rounded bg-amber-950/10 border border-amber-900/20 text-xs text-amber-500">
+                ⚠️ Past months are read-only.
+              </div>
+            )}
+            {!isSubmitted && isFutureMonth && (
+              <div className="p-3 rounded bg-zinc-950 border border-zinc-900 text-xs text-zinc-600">
+                Future months cannot be edited.
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-2">
@@ -281,13 +396,25 @@ export default function OfficerDashboard() {
                   <p className="text-[11px] text-zinc-600 mt-0.5">Specify sales metrics per active model.</p>
                 </div>
                 
-                <button
-                  onClick={handleSaveRecord}
-                  disabled={saving || cars.length === 0}
-                  className="h-8 px-4 rounded bg-[#EB0A1E] hover:bg-red-700 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150 font-semibold text-xs text-white flex items-center gap-1.5 active:scale-[0.98] cursor-pointer"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveRecord}
+                      disabled={saving || cars.length === 0}
+                      className="h-8 px-3 rounded bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700 transition-colors font-medium text-xs text-zinc-300 active:scale-[0.98] cursor-pointer"
+                    >
+                      {saving ? "Saving..." : "Save Draft"}
+                    </button>
+                    
+                    <button
+                      onClick={() => setSubmitConfirmOpen(true)}
+                      disabled={submitting || cars.length === 0}
+                      className="h-8 px-3 rounded bg-[#EB0A1E] hover:bg-red-700 transition-colors font-medium text-xs text-white active:scale-[0.98] cursor-pointer"
+                    >
+                      {submitting ? "Submitting..." : "Submit Log"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {cars.length === 0 ? (
@@ -315,8 +442,9 @@ export default function OfficerDashboard() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
+                          disabled={!canEdit}
                           onClick={() => decrementQty(car._id)}
-                          className="w-8 h-8 rounded bg-zinc-950 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
                         >
                           &minus;
                         </button>
@@ -324,16 +452,18 @@ export default function OfficerDashboard() {
                         <input
                           type="number"
                           min="0"
+                          disabled={!canEdit}
                           value={salesQuantities[car._id] === 0 ? "" : salesQuantities[car._id]}
                           onChange={(e) => updateQuantity(car._id, e.target.value)}
                           placeholder="0"
-                          className="w-14 h-8 bg-zinc-950 border border-zinc-800 rounded text-center font-bold text-xs text-white focus:outline-none focus:border-zinc-700 appearance-none"
+                          className="w-14 h-8 bg-zinc-950 border border-zinc-800 rounded text-center font-bold text-xs text-white focus:outline-none focus:border-zinc-700 disabled:opacity-50 appearance-none"
                         />
                         
                         <button
                           type="button"
+                          disabled={!canEdit}
                           onClick={() => incrementQty(car._id)}
-                          className="w-8 h-8 rounded bg-zinc-950 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded bg-zinc-950 border border-zinc-800 hover:border-zinc-850 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-zinc-300 text-xs transition-colors cursor-pointer"
                         >
                           &#43;
                         </button>
@@ -360,10 +490,7 @@ export default function OfficerDashboard() {
                   <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
                     <span className="text-xs text-zinc-500">Qualified Slab</span>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-300">
-                      {calculations.qualifiedSlab 
-                        ? `${calculations.qualifiedSlab.minCars}${calculations.qualifiedSlab.maxCars === null ? "+" : `–${calculations.qualifiedSlab.maxCars}`} Cars`
-                        : "None"
-                      }
+                      {calculations.qualifiedSlab}
                     </span>
                   </div>
 
@@ -403,9 +530,11 @@ export default function OfficerDashboard() {
                   <div className="flex justify-between items-center text-[9px] text-zinc-600 font-semibold uppercase tracking-wider">
                     <span>{calculations.totalCars} sold</span>
                     <span>
-                      {calculations.nextSlab 
-                        ? `Target: ${calculations.nextSlab.minCars} cars`
-                        : "Maxed"
+                      {isSubmitted 
+                        ? "Locked" 
+                        : calculations.nextSlab 
+                          ? `Target: ${calculations.nextSlab.minCars} cars`
+                          : "Maxed"
                       }
                     </span>
                   </div>
@@ -417,7 +546,7 @@ export default function OfficerDashboard() {
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-3 block">Slab References</h3>
                 <div className="space-y-2">
                   {slabs.map((slab) => {
-                    const isActive = calculations.qualifiedSlab?._id === slab._id;
+                    const isActive = !isSubmitted && calculations.qualifiedSlab.includes(`${slab.minCars}`) && calculations.qualifiedSlab.includes(`${slab.maxCars === null ? "+" : `${slab.maxCars}`}`);
                     return (
                       <div
                         key={slab._id}
@@ -442,6 +571,35 @@ export default function OfficerDashboard() {
           </div>
         )}
       </main>
+
+      {/* --- SUBMIT CONFIRMATION MODAL --- */}
+      {submitConfirmOpen && (
+        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm p-6 rounded bg-zinc-900 border border-zinc-800 shadow-xl relative text-center">
+            <h3 className="text-sm font-semibold text-white mb-2">Submit Monthly Performance Log</h3>
+            <p className="text-[11px] text-zinc-400 leading-relaxed mb-6">
+              Are you sure you want to submit? This month will be permanently locked. You will not be able to edit quantities or save new drafts, and dynamic slab changes by admins will not modify your payout.
+            </p>
+
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSubmitConfirmOpen(false)}
+                className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSubmit}
+                className="px-4 py-1.5 bg-[#EB0A1E] hover:bg-red-700 text-white font-medium text-xs rounded active:scale-[0.98] cursor-pointer"
+              >
+                Confirm Submission
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

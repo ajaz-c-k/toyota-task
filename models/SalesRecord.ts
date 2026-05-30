@@ -12,6 +12,9 @@ export interface ISalesRecord extends Document {
   totalCars: number;
   totalIncentive: number;
   qualifiedSlabId: mongoose.Types.ObjectId | null;
+  status: "draft" | "submitted";
+  qualifiedSlabRateAtSubmission: number;
+  qualifiedSlabRangeAtSubmission: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +32,9 @@ const SalesRecordSchema = new Schema<ISalesRecord>(
     totalCars: { type: Number, required: true, default: 0 },
     totalIncentive: { type: Number, required: true, default: 0 },
     qualifiedSlabId: { type: Schema.Types.ObjectId, ref: "IncentiveSlab", default: null },
+    status: { type: String, required: true, enum: ["draft", "submitted"], default: "draft" },
+    qualifiedSlabRateAtSubmission: { type: Number, default: 0 },
+    qualifiedSlabRangeAtSubmission: { type: String, default: "" },
   },
   { timestamps: true }
 );
