@@ -296,22 +296,30 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col md:flex-row md:h-screen md:overflow-hidden">
       
       {/* Left Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
+      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0 md:h-full md:sticky md:top-0">
         
-        {/* Sidebar Brand Header */}
-        <div className="p-6 border-b border-slate-200">
+        {/* Sidebar Brand Header & Compact Mobile Header */}
+        <div className="p-4 md:p-6 border-b border-slate-200 flex flex-row md:flex-col justify-between items-center md:items-start gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tighter text-slate-900">TOYOTA</span>
             <span className="text-slate-300">|</span>
             <span className="text-xs uppercase tracking-widest text-slate-500 font-bold">Admin Portal</span>
           </div>
+          
+          {/* Mobile Log Out button */}
+          <button
+            onClick={handleLogout}
+            className="md:hidden px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 font-medium transition-all duration-150 cursor-pointer"
+          >
+            Log Out
+          </button>
         </div>
 
         {/* Sidebar Nav Items */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5">
+        <nav className="grid grid-cols-2 md:flex md:flex-col px-4 py-2.5 md:py-6 gap-2 md:gap-1.5 shrink-0 md:flex-1">
           {[
             { id: "payroll", label: "Total Sales" },
             { id: "inventory", label: "Active Models" },
@@ -323,7 +331,7 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                className={`text-center md:text-left px-4 py-2 md:py-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                   isActive 
                     ? "bg-red-50 text-[#EB0A1E]" 
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -336,7 +344,7 @@ export default function AdminDashboard() {
         </nav>
 
         {/* Sidebar Footer / Logout */}
-        <div className="p-6 border-t border-slate-200 flex flex-col gap-3">
+        <div className="hidden md:flex p-6 border-t border-slate-200 flex-col gap-3">
           <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider text-center">
             Confidential Console
           </div>
@@ -351,7 +359,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Workspace Area */}
-      <main className="flex-1 min-w-0 px-6 md:px-10 py-8 space-y-6">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 md:px-10 py-8 space-y-6 md:h-full md:overflow-y-auto">
         
         {/* Toast Alerts (Float) */}
         {(successMessage || errorMessage) && (
@@ -392,50 +400,90 @@ export default function AdminDashboard() {
                 <span className="text-[11px] text-slate-400">Retrieving catalog...</span>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none">
                 {cars.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                     <span className="text-xs text-slate-400 font-medium">No vehicle models listed.</span>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
-                          <th className="pb-4 font-bold">Model Name</th>
-                          <th className="pb-4 font-bold">Suffix</th>
-                          <th className="pb-4 font-bold">Variant</th>
-                          <th className="pb-4 text-right font-bold">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {cars.map((car) => (
-                          <tr key={car._id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-4 font-semibold text-slate-900">{car.modelName}</td>
-                            <td className="py-4 text-slate-600">{car.baseSuffix}</td>
-                            <td className="py-4">
-                              <span className="px-2.5 py-1 rounded bg-slate-100 text-[10px] border border-slate-200 text-slate-700 font-semibold">
-                                {car.variant}
-                              </span>
-                            </td>
-                            <td className="py-4 text-right space-x-4">
+                  <div className="space-y-4">
+                    {/* Desktop View (Standard Table) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                            <th className="pb-4 pr-6 font-bold">Model Name</th>
+                            <th className="pb-4 pr-6 font-bold">Suffix</th>
+                            <th className="pb-4 pr-6 font-bold">Variant</th>
+                            <th className="pb-4 text-right font-bold">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {cars.map((car) => (
+                            <tr key={car._id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">{car.modelName}</td>
+                              <td className="py-4 pr-6 text-slate-600 whitespace-nowrap">{car.baseSuffix}</td>
+                              <td className="py-4 pr-6 whitespace-nowrap">
+                                <span className="px-2.5 py-1 rounded bg-slate-100 text-[10px] border border-slate-200 text-slate-700 font-semibold">
+                                  {car.variant}
+                                </span>
+                              </td>
+                              <td className="py-4 text-right space-x-4">
+                                <button
+                                  onClick={() => openEditCar(car)}
+                                  className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => triggerDelete("car", car._id)}
+                                  className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile View (Responsive Cards) */}
+                    <div className="block md:hidden space-y-4">
+                      {cars.map((car) => (
+                        <div key={car._id} className="p-4 rounded-xl border border-slate-200 bg-white">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Model Name</span>
+                              <span className="text-xs font-bold text-slate-900">{car.modelName}</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded bg-slate-100 text-[9px] border border-slate-200 text-slate-700 font-semibold">
+                              {car.variant}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2.5 border-t border-slate-100">
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Suffix</span>
+                              <span className="text-[11px] font-semibold text-slate-700">{car.baseSuffix}</span>
+                            </div>
+                            <div className="space-x-4">
                               <button
                                 onClick={() => openEditCar(car)}
-                                className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                className="text-[11px] text-slate-500 hover:text-slate-900 font-semibold hover:underline cursor-pointer"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => triggerDelete("car", car._id)}
-                                className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                className="text-[11px] text-red-600 hover:text-red-850 font-semibold hover:underline cursor-pointer"
                               >
                                 Delete
                               </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -465,48 +513,87 @@ export default function AdminDashboard() {
                 <span className="text-[11px] text-slate-400">Retrieving slab settings...</span>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none">
                 {slabs.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                     <span className="text-xs text-slate-400 font-medium">No slabs configured.</span>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
-                          <th className="pb-4 font-bold">Volume Range</th>
-                          <th className="pb-4 font-bold">Incentive Per Car</th>
-                          <th className="pb-4 text-right font-bold">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {slabs.map((slab) => (
-                          <tr key={slab._id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-4 font-semibold text-slate-900">
-                              {slab.minCars} {slab.maxCars === null ? "+ Cars" : `to ${slab.maxCars} Cars`}
-                            </td>
-                            <td className="py-4 text-slate-900 font-bold text-sm">
-                              ₹{slab.incentivePerCar.toLocaleString("en-IN")}
-                            </td>
-                            <td className="py-4 text-right space-x-4">
-                              <button
-                                onClick={() => openEditSlab(slab)}
-                                className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => triggerDelete("slab", slab._id)}
-                                className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
-                              >
-                                Delete
-                              </button>
-                            </td>
+                  <div className="space-y-4">
+                    {/* Desktop View (Standard Table) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                            <th className="pb-4 pr-6 font-bold">Volume Range</th>
+                            <th className="pb-4 pr-6 font-bold">Incentive Per Car</th>
+                            <th className="pb-4 text-right font-bold">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {slabs.map((slab) => (
+                            <tr key={slab._id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">
+                                {slab.minCars} {slab.maxCars === null ? "+ Cars" : `to ${slab.maxCars} Cars`}
+                              </td>
+                              <td className="py-4 pr-6 text-slate-900 font-bold text-sm whitespace-nowrap">
+                                ₹{slab.incentivePerCar.toLocaleString("en-IN")}
+                              </td>
+                              <td className="py-4 text-right space-x-4">
+                                <button
+                                  onClick={() => openEditSlab(slab)}
+                                  className="text-slate-500 hover:text-slate-900 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => triggerDelete("slab", slab._id)}
+                                  className="text-red-600 hover:text-red-850 font-semibold hover:underline transition-colors duration-150 cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile View (Responsive Cards) */}
+                    <div className="block md:hidden space-y-4">
+                      {slabs.map((slab) => (
+                        <div key={slab._id} className="p-4 rounded-xl border border-slate-200 bg-white">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Volume Range</span>
+                              <span className="text-xs font-bold text-slate-900">
+                                {slab.minCars} {slab.maxCars === null ? "+ Cars" : `to ${slab.maxCars} Cars`}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Incentive Per Car</span>
+                              <span className="text-xs font-bold text-slate-900">
+                                ₹{slab.incentivePerCar.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-4 pt-2.5 border-t border-slate-100">
+                            <button
+                              onClick={() => openEditSlab(slab)}
+                              className="text-[11px] text-slate-500 hover:text-slate-900 font-semibold hover:underline cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => triggerDelete("slab", slab._id)}
+                              className="text-[11px] text-red-600 hover:text-red-850 font-semibold hover:underline cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -546,25 +633,25 @@ export default function AdminDashboard() {
                 {/* Aggregate Metrics Grid */}
                 {payrollMetrics && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                    <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-none">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Total Payout</span>
                       <div className="text-2xl font-bold text-[#EB0A1E] tracking-tight">
                         ₹{payrollMetrics.totalPayrollPayout.toLocaleString("en-IN")}
                       </div>
                     </div>
-                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                    <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-none">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Cars Sold (Dealership)</span>
                       <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.totalCarsSold} Cars
                       </div>
                     </div>
-                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                    <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-none">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Active Officers</span>
                       <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.totalOfficers} Officers
                       </div>
                     </div>
-                    <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-none">
+                    <div className="p-4 sm:p-6 rounded-xl border border-slate-200 bg-white shadow-none">
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Locked Submissions</span>
                       <div className="text-2xl font-bold text-slate-900 tracking-tight">
                         {payrollMetrics.lockedSubmissions} / {payrollMetrics.totalOfficers}
@@ -574,53 +661,92 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Payroll Ledger Table */}
-                <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none">
                   <h3 className="text-sm font-bold text-slate-900 mb-6">Monthly Sales Ledger</h3>
                   
                   {payrollList.length === 0 ? (
-                    <div className="text-center py-16">
+                    <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                       <span className="text-xs text-slate-400 font-medium">No dealership logs registered.</span>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
-                            <th className="pb-4 font-bold">Officer</th>
-                            <th className="pb-4 font-bold">Email</th>
-                            <th className="pb-4 font-bold">Cars Sold</th>
-                            <th className="pb-4 font-bold">Qualified Slab</th>
-                            <th className="pb-4 font-bold">Total Payout</th>
-                            <th className="pb-4 text-right font-bold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200">
-                          {payrollList.map((item) => (
-                            <tr key={item.officerId} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="py-4 font-bold text-slate-900">{item.name}</td>
-                              <td className="py-4 text-slate-500">{item.email}</td>
-                              <td className="py-4 text-slate-900 font-semibold">{item.carsSold}</td>
-                              <td className="py-4">
-                                <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
-                                  {item.slabRange}
-                                </span>
-                              </td>
-                              <td className="py-4 font-bold text-[#EB0A1E] text-sm">
-                                ₹{item.payout.toLocaleString("en-IN")}
-                              </td>
-                              <td className="py-4 text-right">
-                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
-                                  item.status === "Locked"
-                                    ? "bg-green-50 border-green-200 text-green-800"
-                                    : "bg-amber-50 border-amber-200 text-amber-800"
-                                  }`}>
-                                  {item.status === "Locked" ? "Locked" : "Draft"}
-                                </span>
-                              </td>
+                    <div className="space-y-4">
+                      {/* Desktop View (Standard Table) */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                              <th className="pb-4 pr-6 font-bold">Officer</th>
+                              <th className="pb-4 pr-6 font-bold">Email</th>
+                              <th className="pb-4 pr-6 font-bold">Cars Sold</th>
+                              <th className="pb-4 pr-6 font-bold">Qualified Slab</th>
+                              <th className="pb-4 pr-6 font-bold">Total Payout</th>
+                              <th className="pb-4 text-right font-bold">Status</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200">
+                            {payrollList.map((item) => (
+                              <tr key={item.officerId} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-4 pr-6 font-bold text-slate-900 whitespace-nowrap">{item.name}</td>
+                                <td className="py-4 pr-6 text-slate-500 whitespace-nowrap">{item.email}</td>
+                                <td className="py-4 pr-6 text-slate-900 font-semibold whitespace-nowrap">{item.carsSold}</td>
+                                <td className="py-4 pr-6 whitespace-nowrap">
+                                  <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
+                                    {item.slabRange}
+                                  </span>
+                                </td>
+                                <td className="py-4 pr-6 font-bold text-[#EB0A1E] text-sm whitespace-nowrap">
+                                  ₹{item.payout.toLocaleString("en-IN")}
+                                </td>
+                                <td className="py-4 text-right">
+                                  <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
+                                    item.status === "Locked"
+                                      ? "bg-green-50 border-green-200 text-green-800"
+                                      : "bg-amber-50 border-amber-200 text-amber-800"
+                                    }`}>
+                                    {item.status === "Locked" ? "Locked" : "Draft"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile View (Responsive Cards) */}
+                      <div className="block md:hidden space-y-4">
+                        {payrollList.map((item) => (
+                          <div key={item.officerId} className="p-4 rounded-xl border border-slate-200 bg-white">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-1">Officer</span>
+                                <span className="text-xs font-bold text-slate-900">{item.name}</span>
+                                <span className="text-[9px] text-slate-500 block mt-0.5">{item.email}</span>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${
+                                item.status === "Locked"
+                                  ? "bg-green-50 border-green-200 text-green-800"
+                                  : "bg-amber-50 border-amber-200 text-amber-800"
+                                }`}>
+                                {item.status === "Locked" ? "Locked" : "Draft"}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 py-2.5 border-t border-b border-slate-100 mb-3 text-[11px]">
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Cars Sold</span>
+                                <span className="font-semibold text-slate-900">{item.carsSold}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Slab Range</span>
+                                <span className="font-semibold text-slate-700">{item.slabRange}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Total Payout</span>
+                              <span className="text-xs font-extrabold text-[#EB0A1E]">₹{item.payout.toLocaleString("en-IN")}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -643,64 +769,114 @@ export default function AdminDashboard() {
                 <span className="text-[11px] text-slate-400">Retrieving system ledger...</span>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none">
                 {historyList.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                     <span className="text-xs text-slate-400 font-medium">No transaction logs logged.</span>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
-                          <th className="pb-4 font-bold">Timestamp</th>
-                          <th className="pb-4 font-bold">Officer Name</th>
-                          <th className="pb-4 font-bold">Email</th>
-                          <th className="pb-4 font-bold">Month</th>
-                          <th className="pb-4 font-bold">Cars Sold</th>
-                          <th className="pb-4 font-bold">Qualified Slab</th>
-                          <th className="pb-4 font-bold">Total Payout</th>
-                          <th className="pb-4 text-right font-bold">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
+                  <div className="space-y-4">
+                      {/* Desktop View (Standard Table) */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                              <th className="pb-4 pr-6 font-bold">Timestamp</th>
+                              <th className="pb-4 pr-6 font-bold">Officer Name</th>
+                              <th className="pb-4 pr-6 font-bold">Email</th>
+                              <th className="pb-4 pr-6 font-bold">Month</th>
+                              <th className="pb-4 pr-6 font-bold">Cars Sold</th>
+                              <th className="pb-4 pr-6 font-bold">Qualified Slab</th>
+                              <th className="pb-4 pr-6 font-bold">Total Payout</th>
+                              <th className="pb-4 text-right font-bold">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200">
+                            {historyList.map((log) => (
+                              <tr key={log._id} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-4 pr-6 text-slate-500 text-[10px] whitespace-nowrap">
+                                  {new Date(log.updatedAt).toLocaleString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </td>
+                                <td className="py-4 pr-6 font-bold text-slate-900 whitespace-nowrap">{log.name}</td>
+                                <td className="py-4 pr-6 text-slate-500 whitespace-nowrap">{log.email}</td>
+                                <td className="py-4 pr-6 text-slate-800 font-semibold uppercase whitespace-nowrap">{log.month}</td>
+                                <td className="py-4 pr-6 text-slate-900 font-semibold whitespace-nowrap">{log.totalCars}</td>
+                                <td className="py-4 pr-6 whitespace-nowrap">
+                                  <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
+                                    {log.slabRange}
+                                  </span>
+                                </td>
+                                <td className="py-4 pr-6 font-bold text-[#EB0A1E] text-sm whitespace-nowrap">
+                                  ₹{log.totalIncentive.toLocaleString("en-IN")}
+                                </td>
+                                <td className="py-4 text-right">
+                                  <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
+                                    log.status === "submitted"
+                                      ? "bg-green-50 border-green-200 text-green-800"
+                                      : "bg-amber-50 border-amber-200 text-amber-800"
+                                  }`}>
+                                    {log.status === "submitted" ? "Locked" : "Draft"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile View (Responsive Cards) */}
+                      <div className="block md:hidden space-y-4">
                         {historyList.map((log) => (
-                          <tr key={log._id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-4 text-slate-500 text-[10px]">
-                              {new Date(log.updatedAt).toLocaleString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </td>
-                            <td className="py-4 font-bold text-slate-900">{log.name}</td>
-                            <td className="py-4 text-slate-500">{log.email}</td>
-                            <td className="py-4 text-slate-800 font-semibold uppercase">{log.month}</td>
-                            <td className="py-4 text-slate-900 font-semibold">{log.totalCars}</td>
-                            <td className="py-4">
-                              <span className="px-2.5 py-1 rounded-lg text-[10px] bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
-                                {log.slabRange}
-                              </span>
-                            </td>
-                            <td className="py-4 font-bold text-[#EB0A1E] text-sm">
-                              ₹{log.totalIncentive.toLocaleString("en-IN")}
-                            </td>
-                            <td className="py-4 text-right">
-                              <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border ${
+                          <div key={log._id} className="p-4 rounded-xl border border-slate-200 bg-white">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <span className="text-[9px] text-slate-500 block mb-1">
+                                  {new Date(log.updatedAt).toLocaleString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                                <span className="text-xs font-bold text-slate-900 block">{log.name}</span>
+                                <span className="text-[9px] text-slate-400 block mt-0.5">{log.email}</span>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${
                                 log.status === "submitted"
                                   ? "bg-green-50 border-green-200 text-green-800"
                                   : "bg-amber-50 border-amber-200 text-amber-800"
-                              }`}>
+                                }`}>
                                 {log.status === "submitted" ? "Locked" : "Draft"}
                               </span>
-                            </td>
-                          </tr>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-b border-slate-100 mb-3 text-[11px]">
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Month</span>
+                                <span className="font-bold text-slate-800 uppercase">{log.month}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Cars Sold</span>
+                                <span className="font-semibold text-slate-900">{log.totalCars}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Slab Range</span>
+                                <span className="font-semibold text-slate-700">{log.slabRange}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block mb-0.5">Total Payout</span>
+                              <span className="text-xs font-extrabold text-[#EB0A1E]">₹{log.totalIncentive.toLocaleString("en-IN")}</span>
+                            </div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
           </div>
@@ -711,7 +887,7 @@ export default function AdminDashboard() {
       {/* --- CAR CREATION/EDIT MODAL --- */}
       {carModal.open && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
+          <div className="w-full max-w-md p-5 sm:p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 mb-1">
               Vehicle Details
             </h3>
@@ -778,7 +954,7 @@ export default function AdminDashboard() {
       {/* --- INCENTIVE SLAB CREATION/EDIT MODAL --- */}
       {slabModal.open && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
+          <div className="w-full max-w-md p-5 sm:p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 mb-1">
               Incentive Rules
             </h3>
@@ -849,7 +1025,7 @@ export default function AdminDashboard() {
       {/* --- CONFIRM DELETE DIALOG --- */}
       {deleteConfirm.open && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative text-center animate-fade-in">
+          <div className="w-full max-w-sm p-5 sm:p-8 rounded-xl bg-white border border-slate-250 shadow-xl relative text-center animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 mb-2">Delete Item</h3>
             <p className="text-xs text-slate-500 leading-relaxed mb-6">
               Delete this {deleteConfirm.type === "car" ? "vehicle model" : "incentive slab"}?

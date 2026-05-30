@@ -39,8 +39,8 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-slate-800 px-6 font-sans antialiased">
-      <div className="w-full max-w-sm p-8 rounded-xl bg-white border border-slate-200 shadow-none flex flex-col items-stretch">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-slate-800 px-4 sm:px-6 font-sans antialiased">
+      <div className="w-full max-w-sm p-5 sm:p-8 rounded-xl bg-white border border-slate-200 shadow-none flex flex-col items-stretch">
         
         {/* Back Link */}
         <Link 

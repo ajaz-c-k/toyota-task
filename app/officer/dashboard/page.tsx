@@ -312,22 +312,30 @@ export default function OfficerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col md:flex-row md:h-screen md:overflow-hidden">
       
       {/* Left Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
+      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0 md:h-full md:sticky md:top-0">
         
-        {/* Sidebar Brand Header */}
-        <div className="p-6 border-b border-slate-200">
+        {/* Sidebar Brand Header & Compact Mobile Header */}
+        <div className="p-4 md:p-6 border-b border-slate-200 flex flex-row md:flex-col justify-between items-center md:items-start gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tighter text-slate-900">TOYOTA</span>
-            <span className="text-slate-300">|</span>
+            <span className="text-slate-350">|</span>
             <span className="text-xs uppercase tracking-widest text-slate-500 font-bold">Sales Portal</span>
           </div>
+          
+          {/* Mobile Log Out button */}
+          <button
+            onClick={handleLogout}
+            className="md:hidden px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 font-medium transition-all duration-150 cursor-pointer"
+          >
+            Log Out
+          </button>
         </div>
 
         {/* Sidebar Nav Items */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5">
+        <nav className="grid grid-cols-2 md:flex md:flex-col px-4 py-2.5 md:py-6 gap-2 md:gap-1.5 shrink-0 md:flex-1">
           {[
             { id: "sales", label: "Submit Sales" },
             { id: "history", label: "Sales History" },
@@ -337,7 +345,7 @@ export default function OfficerDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                className={`text-center md:text-left px-4 py-2 md:py-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                   isActive 
                     ? "bg-red-50 text-[#EB0A1E]" 
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -350,7 +358,7 @@ export default function OfficerDashboard() {
         </nav>
 
         {/* Sidebar Footer / Logout */}
-        <div className="p-6 border-t border-slate-200 flex flex-col gap-3">
+        <div className="hidden md:flex p-6 border-t border-slate-200 flex-col gap-3">
           <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wider text-center">
             Monthly Calculator
           </div>
@@ -365,7 +373,7 @@ export default function OfficerDashboard() {
       </aside>
 
       {/* Main Workspace Area */}
-      <main className="flex-1 min-w-0 px-6 md:px-10 py-8 space-y-6">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 md:px-10 py-8 space-y-6 md:h-full md:overflow-y-auto">
         
         {/* Toast Alerts (Float) */}
         {(successMsg || errorMsg) && (
@@ -452,19 +460,19 @@ export default function OfficerDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* COLUMN 1: Active vehicle logs form */}
-                <section className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-8 shadow-none space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                <section className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                     <div>
                       <h2 className="text-base font-bold text-slate-900">Vehicle Sales</h2>
                       <p className="text-xs text-slate-500 mt-0.5">Enter sales numbers for each model.</p>
                     </div>
                     
                     {canEdit && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 sm:self-center self-start w-full sm:w-auto">
                         <button
                           onClick={handleSaveRecord}
                           disabled={saving || cars.length === 0}
-                          className="h-9 px-4 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-350 transition-colors font-semibold text-xs text-slate-700 cursor-pointer shadow-none active:scale-[0.98]"
+                          className="flex-1 sm:flex-initial h-9 px-4 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-350 transition-colors font-semibold text-xs text-slate-700 cursor-pointer shadow-none active:scale-[0.98]"
                         >
                           {saving ? "Saving..." : "Save Draft"}
                         </button>
@@ -472,7 +480,7 @@ export default function OfficerDashboard() {
                         <button
                           onClick={() => setSubmitConfirmOpen(true)}
                           disabled={submitting || cars.length === 0}
-                          className="h-9 px-4 rounded-lg bg-[#EB0A1E] hover:bg-red-700 transition-colors font-semibold text-xs text-white cursor-pointer shadow-none active:scale-[0.98]"
+                          className="flex-1 sm:flex-initial h-9 px-4 rounded-lg bg-[#EB0A1E] hover:bg-red-700 transition-colors font-semibold text-xs text-white cursor-pointer shadow-none active:scale-[0.98]"
                         >
                           {submitting ? "Submitting..." : "Submit Sales"}
                         </button>
@@ -489,25 +497,25 @@ export default function OfficerDashboard() {
                       {cars.map((car) => (
                         <div
                           key={car._id}
-                          className="p-5 rounded-xl bg-slate-50/50 border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                          className="p-4 sm:p-5 rounded-xl bg-slate-50/50 border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-colors flex flex-row items-center justify-between gap-4"
                         >
-                          <div>
-                            <h3 className="font-bold text-slate-900 text-xs">{car.modelName}</h3>
-                            <div className="flex items-center gap-2 mt-1.5 text-[10px]">
-                              <span className="text-slate-600 font-semibold px-2 py-0.5 rounded bg-white border border-slate-200">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-slate-900 text-xs truncate">{car.modelName}</h3>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px]">
+                              <span className="text-slate-650 font-semibold px-2 py-0.5 rounded bg-white border border-slate-200">
                                 {car.baseSuffix}
                               </span>
-                              <span className="text-slate-500 font-medium">{car.variant}</span>
+                              <span className="text-slate-500 font-medium truncate">{car.variant}</span>
                             </div>
                           </div>
 
                           {/* Item Counters */}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
                               disabled={!canEdit}
                               onClick={() => decrementQty(car._id)}
-                              className="w-10 h-10 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-slate-800 text-base shadow-none transition-colors cursor-pointer"
+                              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-slate-800 text-sm sm:text-base shadow-none transition-colors cursor-pointer"
                             >
                               &minus;
                             </button>
@@ -519,14 +527,14 @@ export default function OfficerDashboard() {
                               value={salesQuantities[car._id] === 0 ? "" : salesQuantities[car._id]}
                               onChange={(e) => updateQuantity(car._id, e.target.value)}
                               placeholder="0"
-                              className="w-16 h-10 bg-white border border-slate-300 text-slate-900 rounded-lg text-center font-bold text-xs focus:outline-none focus:border-slate-500 disabled:opacity-50 appearance-none shadow-none"
+                              className="w-12 h-8 sm:w-16 sm:h-10 bg-white border border-slate-300 text-slate-900 rounded-lg text-center font-bold text-xs focus:outline-none focus:border-slate-500 disabled:opacity-50 appearance-none shadow-none"
                             />
                             
                             <button
                               type="button"
                               disabled={!canEdit}
                               onClick={() => incrementQty(car._id)}
-                              className="w-10 h-10 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-slate-800 text-base shadow-none transition-colors cursor-pointer"
+                              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center font-bold text-slate-800 text-sm sm:text-base shadow-none transition-colors cursor-pointer"
                             >
                               &#43;
                             </button>
@@ -541,7 +549,7 @@ export default function OfficerDashboard() {
                 <section className="lg:col-span-5 flex flex-col gap-6">
                   
                   {/* Payout breakdown card */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none space-y-6">
+                  <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none space-y-6">
                     <h2 className="text-base font-bold text-slate-900">Incentive Payout</h2>
                     
                     <div className="space-y-4">
@@ -574,7 +582,7 @@ export default function OfficerDashboard() {
                   </div>
 
                   {/* Progress tracker */}
-                  <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-none space-y-4">
+                  <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none space-y-4">
                     <h2 className="text-base font-bold text-slate-900">Current Incentive</h2>
                     
                     <div className="space-y-4">
@@ -605,7 +613,7 @@ export default function OfficerDashboard() {
                   </div>
 
                   {/* Slab reference quick-table */}
-                  <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-6 space-y-4">
+                  <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4 sm:p-6 space-y-4">
                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Incentive Rate</h3>
                     <div className="space-y-2">
                       {slabs.map((slab) => {
@@ -636,7 +644,7 @@ export default function OfficerDashboard() {
 
             {/* --- TAB 2: DETAILED SALES HISTORY LOG --- */}
             {activeTab === "history" && (
-              <section className="bg-white border border-slate-200 rounded-xl p-8 shadow-none space-y-6">
+              <section className="bg-white border border-slate-200 rounded-xl p-5 sm:p-8 shadow-none space-y-6">
                 <div className="border-b border-slate-200 pb-4">
                   <h2 className="text-base font-bold text-slate-900">Sales History</h2>
                   <p className="text-xs text-slate-500 mt-0.5">History of monthly sales submissions and drafts.</p>
@@ -647,65 +655,131 @@ export default function OfficerDashboard() {
                     <span className="text-xs text-slate-400 font-medium">No past monthly logs found.</span>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
-                          <th className="pb-4 font-bold">Reporting Month</th>
-                          <th className="pb-4 font-bold">Cars Sold</th>
-                          <th className="pb-4 font-bold">Qualified Slab</th>
-                          <th className="pb-4 font-bold">Total Payout</th>
-                          <th className="pb-4 font-bold">Status</th>
-                          <th className="pb-4 text-right font-bold">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {history.map((recordItem) => {
-                          const recMonth = recordItem.month;
-                          const isLoaded = selectedMonth === recMonth;
-                          
-                          const badgeStyle = recordItem.status === "submitted"
-                            ? "bg-green-50 border-green-200 text-green-800"
-                            : "bg-amber-50 border-amber-200 text-amber-800";
-                          
-                          const slabLabel = recordItem.status === "submitted"
-                            ? recordItem.qualifiedSlabRangeAtSubmission || "None"
-                            : "Draft (Unsubmitted)";
+                  <div className="space-y-4">
+                    {/* Desktop View (Standard Table) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                            <th className="pb-4 pr-6 font-bold">Reporting Month</th>
+                            <th className="pb-4 pr-6 font-bold">Cars Sold</th>
+                            <th className="pb-4 pr-6 font-bold">Qualified Slab</th>
+                            <th className="pb-4 pr-6 font-bold">Total Payout</th>
+                            <th className="pb-4 pr-6 font-bold">Status</th>
+                            <th className="pb-4 text-right font-bold">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {history.map((recordItem) => {
+                            const recMonth = recordItem.month;
+                            const isLoaded = selectedMonth === recMonth;
+                            
+                            const badgeStyle = recordItem.status === "submitted"
+                              ? "bg-green-50 border-green-200 text-green-800"
+                              : "bg-amber-50 border-amber-200 text-amber-800";
+                            
+                            const slabLabel = recordItem.status === "submitted"
+                              ? recordItem.qualifiedSlabRangeAtSubmission || "None"
+                              : "Draft (Unsubmitted)";
 
-                          return (
-                            <tr key={recordItem._id} className={`hover:bg-slate-50/80 transition-colors ${isLoaded ? "bg-slate-50/50" : ""}`}>
-                              <td className="py-4 font-bold text-slate-900 uppercase">{recMonth}</td>
-                              <td className="py-4 text-slate-900 font-semibold">{recordItem.totalCars}</td>
-                              <td className="py-4">
-                                <span className="px-2.5 py-1 rounded-lg text-[10px] border border-slate-200 text-slate-700 bg-slate-100">
-                                  {slabLabel}
-                                </span>
-                              </td>
-                              <td className="py-4 text-[#EB0A1E] font-bold text-sm">
-                                ₹{recordItem.totalIncentive.toLocaleString("en-IN")}
-                              </td>
-                              <td className="py-4">
-                                <span className={`px-2.5 py-1 rounded-lg text-[10px] border font-bold ${badgeStyle}`}>
-                                  {recordItem.status === "submitted" ? "Locked" : "Draft"}
-                                </span>
-                              </td>
-                              <td className="py-4 text-right">
-                                <button
-                                  onClick={() => handleLoadMonth(recMonth)}
-                                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors duration-150 cursor-pointer ${
-                                    isLoaded 
-                                      ? "bg-slate-100 text-slate-900 border border-slate-300" 
-                                      : "text-slate-500 hover:text-slate-900"
-                                  }`}
-                                >
-                                  {isLoaded ? "Loaded" : "Load Month"}
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            return (
+                              <tr key={recordItem._id} className={`hover:bg-slate-50/80 transition-colors ${isLoaded ? "bg-slate-50/50" : ""}`}>
+                                <td className="py-4 pr-6 font-bold text-slate-900 uppercase whitespace-nowrap">{recMonth}</td>
+                                <td className="py-4 pr-6 text-slate-900 font-semibold whitespace-nowrap">{recordItem.totalCars}</td>
+                                <td className="py-4 pr-6 whitespace-nowrap">
+                                  <span className="px-2.5 py-1 rounded-lg text-[10px] border border-slate-200 text-slate-700 bg-slate-100">
+                                    {slabLabel}
+                                  </span>
+                                </td>
+                                <td className="py-4 pr-6 text-[#EB0A1E] font-bold text-sm whitespace-nowrap">
+                                  ₹{recordItem.totalIncentive.toLocaleString("en-IN")}
+                                </td>
+                                <td className="py-4 pr-6 whitespace-nowrap">
+                                  <span className={`px-2.5 py-1 rounded-lg text-[10px] border font-bold ${badgeStyle}`}>
+                                    {recordItem.status === "submitted" ? "Locked" : "Draft"}
+                                  </span>
+                                </td>
+                                <td className="py-4 text-right whitespace-nowrap">
+                                  <button
+                                    onClick={() => handleLoadMonth(recMonth)}
+                                    className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors duration-150 cursor-pointer ${
+                                      isLoaded 
+                                        ? "bg-slate-100 text-slate-900 border border-slate-300" 
+                                        : "text-slate-500 hover:text-slate-900"
+                                    }`}
+                                  >
+                                    {isLoaded ? "Loaded" : "Load Month"}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile View (No Horizontal Scroll Cards) */}
+                    <div className="block md:hidden space-y-4">
+                      {history.map((recordItem) => {
+                        const recMonth = recordItem.month;
+                        const isLoaded = selectedMonth === recMonth;
+                        
+                        const badgeStyle = recordItem.status === "submitted"
+                          ? "bg-green-50 border-green-200 text-green-800"
+                          : "bg-amber-50 border-amber-200 text-amber-800";
+                        
+                        const slabLabel = recordItem.status === "submitted"
+                          ? recordItem.qualifiedSlabRangeAtSubmission || "None"
+                          : "Draft";
+
+                        return (
+                          <div 
+                            key={recordItem._id} 
+                            className={`p-4 rounded-xl border transition-all duration-150 ${
+                              isLoaded ? "bg-slate-50 border-slate-350" : "bg-white border-slate-200"
+                            }`}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <span className="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">Reporting Month</span>
+                                <span className="text-xs font-extrabold text-slate-900 uppercase">{recMonth}</span>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] border font-bold ${badgeStyle}`}>
+                                {recordItem.status === "submitted" ? "Locked" : "Draft"}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 py-2.5 border-t border-b border-slate-100 mb-3 text-[11px]">
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Cars Sold</span>
+                                <span className="font-semibold text-slate-900">{recordItem.totalCars}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Slab Rate</span>
+                                <span className="font-semibold text-slate-700">{slabLabel}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-[9px] text-slate-400 block mb-0.5">Total Payout</span>
+                                <span className="font-extrabold text-sm text-[#EB0A1E]">₹{recordItem.totalIncentive.toLocaleString("en-IN")}</span>
+                              </div>
+                              <button
+                                onClick={() => handleLoadMonth(recMonth)}
+                                className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors duration-150 cursor-pointer ${
+                                  isLoaded 
+                                    ? "bg-slate-100 text-slate-900 border border-slate-300" 
+                                    : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
+                                }`}
+                              >
+                                {isLoaded ? "Loaded" : "Load Month"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </section>
